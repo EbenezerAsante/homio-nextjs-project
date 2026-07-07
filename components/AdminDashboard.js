@@ -8,6 +8,7 @@ import ListingsTab from "./ListingsTab";
 import EnquiriesTab from "./EnquiriesTab";
 import AnalyticsTab from "./AnalyticsTab";
 import ProfileTab from "./ProfileTab";
+import SecurityTab from "./SecurityTab";
 import "../styles/admin.css";
 
 const NAV_ITEMS = [
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { id: "enquiries", label: "Enquiries" },
   { id: "analytics", label: "Analytics" },
   { id: "profile", label: "Profile" },
+  { id: "security", label: "Security" },
 ];
 
 export default function AdminDashboard({ agent, userId }) {
@@ -77,6 +79,7 @@ export default function AdminDashboard({ agent, userId }) {
             {activeTab === "enquiries" && <EnquiriesTab enquiries={enquiries} onChange={loadData} />}
             {activeTab === "analytics" && <AnalyticsTab analytics={analytics} listings={listings} />}
             {activeTab === "profile" && <ProfileTab agent={agent} userId={userId} />}
+            {activeTab === "security" && <SecurityTab />}
           </>
         )}
       </main>
