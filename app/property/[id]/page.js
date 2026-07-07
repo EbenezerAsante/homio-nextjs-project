@@ -4,6 +4,7 @@ import { T, fmt, CAT_LABEL, getCoords } from "../../../lib/constants";
 import EnquiryForm from "../../../components/EnquiryForm";
 import PropertyMap from "../../../components/PropertyMap";
 import PropertyGallery from "../../../components/PropertyGallery";
+import MortgageCalculator from "../../../components/MortgageCalculator";
 
 export const revalidate = 30;
 
@@ -52,6 +53,8 @@ export default async function PropertyDetail({ params }) {
                 <Stat label="🏷 Type" value={CAT_LABEL[p.category] || p.category} />
               </div>
             </div>
+
+            {p.listing_type === "sale" && <MortgageCalculator price={p.price} />}
 
             {p.description && (
               <div style={{ background: "#fff", borderRadius: 10, padding: 24, marginBottom: 16, border: `1px solid ${T.border}` }}>
