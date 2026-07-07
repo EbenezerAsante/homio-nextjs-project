@@ -1,0 +1,70 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #F4F6F9;
+  color: #374151;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ── Responsive: Listings page ── */
+@media (max-width: 900px) {
+  .homio-listings-layout {
+    flex-direction: column !important;
+  }
+  .homio-filter-sidebar {
+    width: 100% !important;
+    position: static !important;
+  }
+}
+
+/* ── Responsive: Property detail page ── */
+@media (max-width: 900px) {
+  .homio-detail-layout {
+    flex-direction: column !important;
+  }
+  .homio-detail-sidebar {
+    width: 100% !important;
+  }
+  .homio-detail-gallery {
+    height: 260px !important;
+  }
+}
+
+/* ── Responsive: Admin two-column form ── */
+@media (max-width: 900px) {
+  .homio-admin-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Responsive: general text scaling ── */
+@media (max-width: 600px) {
+  .homio-hero-title {
+    font-size: 30px !important;
+  }
+  .homio-key-details {
+    grid-template-columns: 1fr !important;
+  }
+}
