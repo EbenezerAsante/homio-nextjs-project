@@ -9,9 +9,8 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
   const [mode, setMode] = useState("login"); // login | signup | forgot
-  const [accountType, setAccountType] = useState("buyer"); // buyer | agent
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "", company: "", fullName: "", phone: "" });
+  const [form, setForm] = useState({ email: "", password: "", fullName: "", phone: "" });
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +33,7 @@ export default function LoginPage() {
     }
 
     if (mode === "login") {
-      const { data: signInData, error: err } = await supabase.auth.signInWithPassword({
+      const { error: err } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       });
@@ -42,20 +41,14 @@ export default function LoginPage() {
         setLoading(false);
         return setError(err.message);
       }
-
-      // Check whether this user has an agent profile to decide where to send them
-      const { data: agentRow } = await supabase
-        .from("agents")
-        .select("id")
-        .eq("id", signInData.user.id)
-        .maybeSingle();
-
       setLoading(false);
-      window.location.href = agentRow ? "/admin" : "/";
+      window.location.href = "/dashboard";
       return;
     }
 
-    // signup
+    // signup — everyone gets the same kind of account.
+    // What they want to DO (buy, sell, become an agent, etc.) is chosen
+    // afterwards on /dashboard, not at signup.
     const { data, error: err } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
@@ -63,7 +56,6 @@ export default function LoginPage() {
         data: {
           full_name: form.fullName,
           phone: form.phone,
-          account_type: accountType,
         },
       },
     });
@@ -72,30 +64,8 @@ export default function LoginPage() {
       return setError(err.message);
     }
 
-    // Only create an agents row if signing up as an agent.
-    // Buyers get a plain Supabase auth account with no extra profile row —
-    // favorites/saved searches will reference auth.users.id directly.
-    if (data.user && accountType === "agent") {
-      const { error: profileErr } = await supabase.from("agents").insert({
-        id: data.user.id,
-        company: form.company,
-        full_name: form.fullName,
-        phone: form.phone,
-        email: form.email,
-      });
-      if (profileErr) {
-        setLoading(false);
-        return setError(profileErr.message);
-      }
-    }
-
     setLoading(false);
-
-    if (accountType === "agent") {
-      router.push("/admin");
-    } else {
-      router.push("/");
-    }
+    router.push("/dashboard");
     router.refresh();
   };
 
@@ -113,56 +83,13 @@ export default function LoginPage() {
               ? "Sign in to your account"
               : mode === "forgot"
               ? "We'll email you a reset link"
-              : accountType === "agent"
-              ? "Create your agent account"
-              : "Create your account"}
+              : "Create your account — you'll choose what to do next"}
           </p>
         </div>
-
-        {/* Account type toggle — signup only */}
-        {mode === "signup" && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 18, background: T.bg, borderRadius: 8, padding: 4 }}>
-            <button
-              onClick={() => setAccountType("buyer")}
-              style={{
-                flex: 1,
-                border: "none",
-                borderRadius: 6,
-                padding: "8px 0",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                background: accountType === "buyer" ? T.navy : "transparent",
-                color: accountType === "buyer" ? "#fff" : T.gray2,
-              }}
-            >
-              I'm a Buyer / Renter
-            </button>
-            <button
-              onClick={() => setAccountType("agent")}
-              style={{
-                flex: 1,
-                border: "none",
-                borderRadius: 6,
-                padding: "8px 0",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                background: accountType === "agent" ? T.navy : "transparent",
-                color: accountType === "agent" ? "#fff" : T.gray2,
-              }}
-            >
-              I'm an Agent
-            </button>
-          </div>
-        )}
 
         {mode === "signup" && (
           <>
             <input placeholder="Full Name" value={form.fullName} onChange={(e) => set("fullName", e.target.value)} style={inputStyle} />
-            {accountType === "agent" && (
-              <input placeholder="Company / Agency Name" value={form.company} onChange={(e) => set("company", e.target.value)} style={inputStyle} />
-            )}
             <input placeholder="Phone Number (+233...)" value={form.phone} onChange={(e) => set("phone", e.target.value)} style={inputStyle} />
           </>
         )}

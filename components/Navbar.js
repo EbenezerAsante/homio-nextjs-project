@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 import { T } from "../lib/constants";
+import { Heart } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -114,6 +115,22 @@ export default function Navbar() {
           {user ? (
             <>
               <Link
+                href="/saved"
+                style={{
+                  border: `1.5px solid ${T.border}`,
+                  color: T.gray1,
+                  borderRadius: 8,
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                <Heart size={13} strokeWidth={2.4} /> Saved
+              </Link>
+              <Link
                 href="/dashboard"
                 style={{
                   border: `1.5px solid ${T.border}`,
@@ -124,7 +141,7 @@ export default function Navbar() {
                   fontWeight: 700,
                 }}
               >
-                ♥ My Account
+                Dashboard
               </Link>
               {isAgent && (
                 <Link
@@ -138,7 +155,7 @@ export default function Navbar() {
                     fontWeight: 700,
                   }}
                 >
-                  Dashboard
+                  Agent Admin
                 </Link>
               )}
               <button
@@ -228,12 +245,15 @@ export default function Navbar() {
           <div style={{ height: 1, background: T.border, margin: "8px 0" }} />
           {user ? (
             <>
+              <Link href="/saved" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <Heart size={15} strokeWidth={2.4} /> Saved Properties
+              </Link>
               <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-                ♥ My Account
+                Dashboard
               </Link>
               {isAgent && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.navy, fontWeight: 700 }}>
-                  Dashboard
+                  Agent Admin
                 </Link>
               )}
               <button
