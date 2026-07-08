@@ -74,7 +74,15 @@ export default function AdminDashboard({ agent, userId }) {
           <div style={{ padding: 40, textAlign: "center", color: T.gray2 }}>Loading...</div>
         ) : (
           <>
-            {activeTab === "overview" && <OverviewTab analytics={analytics} listings={listings} enquiries={enquiries} />}
+            {activeTab === "overview" && (
+              <OverviewTab
+                analytics={analytics}
+                listings={listings}
+                enquiries={enquiries}
+                agent={agent}
+                onNavigate={setActiveTab}
+              />
+            )}
             {activeTab === "listings" && <ListingsTab listings={listings} userId={userId} onChange={loadData} />}
             {activeTab === "enquiries" && <EnquiriesTab enquiries={enquiries} onChange={loadData} />}
             {activeTab === "analytics" && <AnalyticsTab analytics={analytics} listings={listings} />}
