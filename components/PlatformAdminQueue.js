@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, approveApplication, rejectApplication } from "@/lib/platform-admin-queries";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, approveApplication, rejectApplication, revokeApplication } from "@/lib/platform-admin-queries";
 import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound } from "lucide-react";
 
 const ROLE_META = {
@@ -40,7 +40,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function ApplicationCard({ app, role, onApprove, onReject, busy }) {
+function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
   const relevantFields = Object.keys(FIELD_LABELS).filter((k) => app[k] !== undefined && app[k] !== null && app[k] !== "");
 
   return (
@@ -89,6 +89,16 @@ function ApplicationCard({ app, role, onApprove, onReject, busy }) {
           </button>
         </div>
       )}
+
+      {app.status === "approved" && (
+        <button
+          onClick={() => onRevoke(role, app.id)}
+          disabled={busy}
+          style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#fff", color: T.red, border: `1.5px solid ${T.red}`, borderRadius: 8, padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+        >
+          <XCircle size={15} /> Revoke Access
+        </button>
+      )}
     </div>
   );
 }
@@ -135,6 +145,18 @@ export default function PlatformAdminQueue({ adminName }) {
       await load();
     } catch (e) {
       alert(e.message || "Failed to reject");
+    }
+    setBusyId(null);
+  };
+
+  const handleRevoke = async (role, userId) => {
+    if (!confirm("Revoke this person's access? They will lose their dashboard access immediately and would need to re-apply.")) return;
+    setBusyId(userId);
+    try {
+      await revokeApplication(role, userId);
+      await load();
+    } catch (e) {
+      alert(e.message || "Failed to revoke");
     }
     setBusyId(null);
   };
@@ -222,6 +244,7 @@ export default function PlatformAdminQueue({ adminName }) {
                 role={activeRole}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onRevoke={handleRevoke}
                 busy={busyId === app.id}
               />
             ))}
