@@ -5,6 +5,7 @@ import EnquiryForm from "../../../components/EnquiryForm";
 import PropertyMap from "../../../components/PropertyMap";
 import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
+import RecentlyViewedTracker from "../../../components/RecentlyViewedTracker";
 
 export const revalidate = 30;
 
@@ -28,6 +29,7 @@ export default async function PropertyDetail({ params }) {
 
   return (
     <div style={{ background: T.bg, minHeight: "90vh" }}>
+      <RecentlyViewedTracker listingId={p.id} />
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 24px" }}>
         <div className="homio-detail-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 620px", minWidth: 0 }}>

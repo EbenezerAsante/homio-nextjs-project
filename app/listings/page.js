@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-server";
 import PropertyCard from "../../components/PropertyCard";
+import SaveSearchButton from "../../components/SaveSearchButton";
 import { T, REGIONS, CAT_LABEL } from "../../lib/constants";
 
 export const revalidate = 30;
@@ -193,6 +194,8 @@ export default async function ListingsPage({ searchParams }) {
             >
               Apply Filters
             </button>
+
+            <SaveSearchButton filters={{ type, region, category, beds, minPrice, maxPrice, furnished, q, sort }} />
 
             <Link
               href="/listings"

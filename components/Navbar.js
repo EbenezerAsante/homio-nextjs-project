@@ -114,7 +114,7 @@ export default function Navbar() {
           {user ? (
             <>
               <Link
-                href="/saved"
+                href="/dashboard"
                 style={{
                   border: `1.5px solid ${T.border}`,
                   color: T.gray1,
@@ -124,7 +124,7 @@ export default function Navbar() {
                   fontWeight: 700,
                 }}
               >
-                ♥ Saved
+                ♥ My Account
               </Link>
               {isAgent && (
                 <Link
@@ -228,8 +228,8 @@ export default function Navbar() {
           <div style={{ height: 1, background: T.border, margin: "8px 0" }} />
           {user ? (
             <>
-              <Link href="/saved" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-                ♥ Saved Properties
+              <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+                ♥ My Account
               </Link>
               {isAgent && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.navy, fontWeight: 700 }}>
