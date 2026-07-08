@@ -11,6 +11,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
   const [isAgent, setIsAgent] = useState(false);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -32,6 +33,12 @@ export default function Navbar() {
           .eq("id", currentUser.id)
           .maybeSingle();
         setIsAgent(!!agentRow);
+        const { data: profileRow } = await supabase
+          .from("profiles")
+          .select("is_platform_admin")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+        setIsPlatformAdmin(!!profileRow?.is_platform_admin);
       }
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -44,8 +51,15 @@ export default function Navbar() {
           .eq("id", currentUser.id)
           .maybeSingle();
         setIsAgent(!!agentRow);
+        const { data: profileRow } = await supabase
+          .from("profiles")
+          .select("is_platform_admin")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+        setIsPlatformAdmin(!!profileRow?.is_platform_admin);
       } else {
         setIsAgent(false);
+        setIsPlatformAdmin(false);
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -158,6 +172,14 @@ export default function Navbar() {
                   Agent Admin
                 </Link>
               )}
+              {isPlatformAdmin && (
+                <Link
+                  href="/platform-admin"
+                  style={{ border: `1.5px solid ${T.gold}`, color: T.gold, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
+                >
+                  Platform Admin
+                </Link>
+              )}
               <button
                 onClick={signOut}
                 style={{
@@ -254,6 +276,11 @@ export default function Navbar() {
               {isAgent && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.navy, fontWeight: 700 }}>
                   Agent Admin
+                </Link>
+              )}
+              {isPlatformAdmin && (
+                <Link href="/platform-admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gold, fontWeight: 700 }}>
+                  Platform Admin
                 </Link>
               )}
               <button
