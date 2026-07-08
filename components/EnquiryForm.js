@@ -18,9 +18,11 @@ export default function EnquiryForm({ listingId, agentId }) {
     }
     setSending(true);
     setError(null);
+    const { data: { user } } = await supabase.auth.getUser();
     const { error: err } = await supabase.from("enquiries").insert({
       listing_id: listingId,
       agent_id: agentId,
+      buyer_id: user?.id || null,
       name: form.name,
       phone: form.phone,
       email: form.email || null,
@@ -35,6 +37,9 @@ export default function EnquiryForm({ listingId, agentId }) {
     return (
       <div style={{ background: T.greenL, color: T.green, padding: 14, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: 700 }}>
         ✔ Enquiry sent! The agent will contact you shortly.
+        <div style={{ fontWeight: 400, fontSize: 12, marginTop: 4 }}>
+          Signed in? Continue the conversation anytime from Dashboard → Messages.
+        </div>
       </div>
     );
   }

@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import { createClient } from "../../../lib/supabase-server";
 import { T, fmt, CAT_LABEL, getCoords } from "../../../lib/constants";
 import EnquiryForm from "../../../components/EnquiryForm";
+import AppointmentBooking from "../../../components/AppointmentBooking";
 import PropertyMap from "../../../components/PropertyMap";
 import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
-import RecentlyViewedTracker from "../../../components/RecentlyViewedTracker";
 
 export const revalidate = 30;
 
@@ -29,7 +29,6 @@ export default async function PropertyDetail({ params }) {
 
   return (
     <div style={{ background: T.bg, minHeight: "90vh" }}>
-      <RecentlyViewedTracker listingId={p.id} />
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 24px" }}>
         <div className="homio-detail-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 620px", minWidth: 0 }}>
@@ -107,6 +106,10 @@ export default async function PropertyDetail({ params }) {
                 📞 {p.agents?.phone || "Contact Agent"}
               </a>
               <EnquiryForm listingId={p.id} agentId={p.agent_id} />
+            </div>
+
+            <div style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow, marginTop: 16 }}>
+              <AppointmentBooking listingId={p.id} agentId={p.agent_id} />
             </div>
           </div>
         </div>

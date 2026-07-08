@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-client";
 import { fetchUserRoles } from "@/lib/profile-queries";
 import { T } from "@/lib/constants";
-import { Search, Home, Briefcase, Building2, HardHat, KeyRound, Clock, CheckCircle2 } from "lucide-react";
+import { Search, Home, Briefcase, Building2, HardHat, KeyRound, Clock, CheckCircle2, MessageCircle, CalendarDays } from "lucide-react";
 
 const TILES = [
   {
@@ -200,6 +200,15 @@ export default function DashboardPage() {
             Skip to listings →
           </Link>
         </p>
+
+        <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
+          <Link href="/dashboard/messages" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.navy, fontWeight: 700 }}>
+            <MessageCircle size={15} /> Messages
+          </Link>
+          <Link href="/dashboard/appointments" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: T.navy, fontWeight: 700 }}>
+            <CalendarDays size={15} /> My Appointments
+          </Link>
+        </div>
       </div>
     </div>
   );
