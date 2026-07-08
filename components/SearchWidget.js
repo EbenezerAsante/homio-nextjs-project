@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { T, REGIONS, CAT_LABEL } from "../lib/constants";
+import { Search } from "lucide-react";
 
 export default function SearchWidget() {
   const router = useRouter();
@@ -111,9 +112,13 @@ export default function SearchWidget() {
             fontSize: 14,
             cursor: "pointer",
             whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
           }}
         >
-          🔍 Search
+          <Search size={15} strokeWidth={2.4} /> Search
         </button>
       </div>
     </div>

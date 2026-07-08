@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-server";
 import PropertyCard from "../../components/PropertyCard";
-import SaveSearchButton from "../../components/SaveSearchButton";
 import { T, REGIONS, CAT_LABEL } from "../../lib/constants";
 
 export const revalidate = 30;
@@ -195,8 +194,6 @@ export default async function ListingsPage({ searchParams }) {
               Apply Filters
             </button>
 
-            <SaveSearchButton filters={{ type, region, category, beds, minPrice, maxPrice, furnished, q, sort }} />
-
             <Link
               href="/listings"
               style={{ textAlign: "center", fontSize: 13, color: T.gray2, textDecoration: "underline" }}
@@ -243,7 +240,8 @@ export default async function ListingsPage({ searchParams }) {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
+                gridTemplateColumns: "repeat(auto-fill,minmax(280px,300px))",
+                justifyContent: "start",
                 gap: 20,
               }}
             >

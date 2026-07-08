@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { T, fmt } from "../lib/constants";
 import { createClient } from "../lib/supabase-client";
+import { MapPin, BedDouble, Bath, Ruler } from "lucide-react";
 
 function Pill({ label, color, bg }) {
   return (
@@ -122,10 +123,10 @@ export default function PropertyCard({ p }) {
   const sortedImages = p.listing_images?.length
     ? [...p.listing_images].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
     : [];
-  const coverImage = sortedImages[0]?.url || p.img || "https://via.placeholder.com/600x400?text=Homio";
+  const coverImage = sortedImages[0]?.url || p.img || "/property-placeholder.svg";
 
   return (
-    <Link href={`/property/${p.id}`}>
+    <Link href={`/property/${p.id}`} style={{ display: "block", height: "100%" }}>
       <div
         style={{
           background: "#fff",
@@ -135,6 +136,7 @@ export default function PropertyCard({ p }) {
           cursor: "pointer",
           display: "flex",
           flexDirection: "column",
+          height: "100%",
           border: `1px solid ${T.border}`,
           transition: "box-shadow .18s, transform .18s",
         }}
@@ -163,8 +165,9 @@ export default function PropertyCard({ p }) {
           <div style={{ fontSize: 13, fontWeight: 600, color: T.gray1, marginBottom: 4, lineHeight: 1.4 }}>
             {p.title}
           </div>
-          <div style={{ fontSize: 12, color: T.gray2, marginBottom: 10 }}>
-            📍 {p.city}, {p.region}
+          <div style={{ fontSize: 12, color: T.gray2, marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
+            <MapPin size={12} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+            {p.city}, {p.region}
           </div>
           <div
             style={{
@@ -178,9 +181,21 @@ export default function PropertyCard({ p }) {
               flexWrap: "wrap",
             }}
           >
-            {p.bedrooms > 0 && <span>🛏 {p.bedrooms} bed{p.bedrooms > 1 ? "s" : ""}</span>}
-            {p.bathrooms > 0 && <span>🚿 {p.bathrooms} bath{p.bathrooms > 1 ? "s" : ""}</span>}
-            {p.sqft > 0 && <span>📐 {p.sqft.toLocaleString()} sqft</span>}
+            {p.bedrooms > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <BedDouble size={14} strokeWidth={2.2} /> {p.bedrooms} bed{p.bedrooms > 1 ? "s" : ""}
+              </span>
+            )}
+            {p.bathrooms > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Bath size={14} strokeWidth={2.2} /> {p.bathrooms} bath{p.bathrooms > 1 ? "s" : ""}
+              </span>
+            )}
+            {p.sqft > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Ruler size={14} strokeWidth={2.2} /> {p.sqft.toLocaleString()} sqft
+              </span>
+            )}
           </div>
         </div>
       </div>

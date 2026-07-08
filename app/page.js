@@ -278,7 +278,14 @@ function Grid({ items }) {
     );
   }
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 20 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill,minmax(280px,300px))",
+        justifyContent: "start",
+        gap: 20,
+      }}
+    >
       {items.map((p) => (
         <PropertyCard key={p.id} p={p} />
       ))}
