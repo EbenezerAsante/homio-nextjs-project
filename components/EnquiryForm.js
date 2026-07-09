@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "../lib/supabase-client";
 import { T } from "../lib/constants";
 
@@ -10,6 +10,31 @@ export default function EnquiryForm({ listingId, agentId }) {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const [isOwnListing, setIsOwnListing] = useState(false);
+  const [checkingOwner, setCheckingOwner] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      const user = data.user;
+      setIsOwnListing(!!user && user.id === agentId);
+
+      if (user && user.id !== agentId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        setForm((f) => ({
+          ...f,
+          name: profile?.full_name || f.name,
+          email: profile?.email || user.email || f.email,
+        }));
+      }
+
+      setCheckingOwner(false);
+    });
+  }, [agentId]);
 
   const submit = async () => {
     if (!form.name || !form.phone) {
@@ -19,6 +44,13 @@ export default function EnquiryForm({ listingId, agentId }) {
     setSending(true);
     setError(null);
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (user?.id === agentId) {
+      setSending(false);
+      setError("You can't send an enquiry on your own listing.");
+      return;
+    }
+
     const { error: err } = await supabase.from("enquiries").insert({
       listing_id: listingId,
       agent_id: agentId,
@@ -32,6 +64,16 @@ export default function EnquiryForm({ listingId, agentId }) {
     if (err) setError(err.message);
     else setSent(true);
   };
+
+  if (checkingOwner) return null;
+
+  if (isOwnListing) {
+    return (
+      <div style={{ background: T.bg, color: T.gray2, padding: 14, borderRadius: 8, textAlign: "center", fontSize: 13 }}>
+        This is your own listing — enquiries aren't available here.
+      </div>
+    );
+  }
 
   if (sent) {
     return (

@@ -36,6 +36,24 @@ export default async function PropertyDetail({ params }) {
               <PropertyGallery images={images} title={p.title} />
             </div>
 
+            {p.video_url && (
+              <div style={{ background: "#fff", borderRadius: 10, padding: 24, marginBottom: 16, border: `1px solid ${T.border}` }}>
+                <h3 style={{ margin: "0 0 16px", color: T.navy, fontSize: 16 }}>Video Tour</h3>
+                {/youtube\.com|youtu\.be|vimeo\.com/.test(p.video_url) ? (
+                  <div style={{ position: "relative", paddingTop: "56.25%", borderRadius: 8, overflow: "hidden" }}>
+                    <iframe
+                      src={p.video_url.replace("watch?v=", "embed/")}
+                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <video src={p.video_url} controls style={{ width: "100%", borderRadius: 8 }} />
+                )}
+              </div>
+            )}
+
             <div style={{ background: "#fff", borderRadius: 10, padding: 24, marginBottom: 16, border: `1px solid ${T.border}` }}>
               <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 24, margin: "0 0 6px" }}>{p.title}</h1>
               <p style={{ color: T.gray2, margin: "0 0 14px", fontSize: 14 }}>📍 {p.city}, {p.region}</p>
@@ -51,6 +69,7 @@ export default async function PropertyDetail({ params }) {
                 {p.bedrooms > 0 && <Stat label="🛏 Bedrooms" value={p.bedrooms} />}
                 {p.bathrooms > 0 && <Stat label="🚿 Bathrooms" value={p.bathrooms} />}
                 {p.sqft > 0 && <Stat label="📐 Floor Area" value={`${p.sqft.toLocaleString()} sqft`} />}
+                {p.plot_size && <Stat label="🗺 Plot Size" value={p.plot_size} />}
                 <Stat label="🏷 Type" value={CAT_LABEL[p.category] || p.category} />
               </div>
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchMessages, sendMessage } from "@/lib/messaging-queries";
+import { fetchMessages, sendMessage, markThreadRead } from "@/lib/messaging-queries";
 import { T } from "@/lib/constants";
 import { Send } from "lucide-react";
 
@@ -16,6 +16,7 @@ export default function MessageThread({ enquiry, currentUserId, currentUserRole 
     const data = await fetchMessages(enquiry.id);
     setMessages(data);
     setLoading(false);
+    markThreadRead(enquiry.id, currentUserId);
   };
 
   useEffect(() => {

@@ -1,20 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 import { T } from "../lib/constants";
-import { Heart } from "lucide-react";
+import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState(null);
   const [isAgent, setIsAgent] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const profileRef = useRef(null);
+  const moreRef = useRef(null);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    const handleClick = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [profileOpen]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const handleClick = (e) => {
+      if (moreRef.current && !moreRef.current.contains(e.target)) {
+        setMoreOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [moreOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -35,10 +62,11 @@ export default function Navbar() {
         setIsAgent(!!agentRow);
         const { data: profileRow } = await supabase
           .from("profiles")
-          .select("is_platform_admin")
+          .select("is_platform_admin, full_name")
           .eq("id", currentUser.id)
           .maybeSingle();
         setIsPlatformAdmin(!!profileRow?.is_platform_admin);
+        setFullName(profileRow?.full_name || "");
       }
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -53,13 +81,15 @@ export default function Navbar() {
         setIsAgent(!!agentRow);
         const { data: profileRow } = await supabase
           .from("profiles")
-          .select("is_platform_admin")
+          .select("is_platform_admin, full_name")
           .eq("id", currentUser.id)
           .maybeSingle();
         setIsPlatformAdmin(!!profileRow?.is_platform_admin);
+        setFullName(profileRow?.full_name || "");
       } else {
         setIsAgent(false);
         setIsPlatformAdmin(false);
+        setFullName("");
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -116,85 +146,105 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop nav — hidden on small screens */}
-        <nav className="homio-desktop-nav" style={{ display: "flex", gap: 2, flex: 1 }}>
-          <Link
-            href="/listings"
-            style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}
-          >
-            For Sale / Rent
+        <nav className="homio-desktop-nav" style={{ display: "flex", gap: 2, flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Link href="/" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray1, fontWeight: 600 }}>
+            Home
           </Link>
+          <Link href="/about" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
+            About
+          </Link>
+          <Link href="/how-it-works" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
+            How It Works
+          </Link>
+          <Link href="/for-contributors" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
+            For Contributors
+          </Link>
+
+          <div ref={moreRef} style={{ position: "relative" }}>
+            <button
+              onClick={() => setMoreOpen((o) => !o)}
+              style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500, background: "none", border: "none", cursor: "pointer" }}
+            >
+              More
+              <ChevronDown size={14} style={{ transform: moreOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+            </button>
+            {moreOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  left: 0,
+                  background: "#fff",
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 10,
+                  boxShadow: T.shadowHover,
+                  minWidth: 190,
+                  padding: 6,
+                  zIndex: 50,
+                }}
+              >
+                <DropdownLink href="/listings" icon={Search} label="Browse Listings" onClick={() => setMoreOpen(false)} />
+                <DropdownLink href="/blog" icon={Newspaper} label="Blog" onClick={() => setMoreOpen(false)} />
+                <DropdownLink href="/team" icon={Users} label="Team" onClick={() => setMoreOpen(false)} />
+                <DropdownLink href="/contact" icon={Mail} label="Contact" onClick={() => setMoreOpen(false)} />
+              </div>
+            )}
+          </div>
         </nav>
 
-        <div className="homio-desktop-nav" style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: "auto" }}>
+        <div className="homio-desktop-nav" style={{ display: "flex", gap: 10, flexShrink: 0, marginLeft: "auto", alignItems: "center" }}>
           {user ? (
             <>
-              <Link
-                href="/saved"
-                style={{
-                  border: `1.5px solid ${T.border}`,
-                  color: T.gray1,
-                  borderRadius: 8,
-                  padding: "6px 14px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                }}
-              >
-                <Heart size={13} strokeWidth={2.4} /> Saved
-              </Link>
-              <Link
-                href="/dashboard"
-                style={{
-                  border: `1.5px solid ${T.border}`,
-                  color: T.gray1,
-                  borderRadius: 8,
-                  padding: "6px 14px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                }}
-              >
-                Dashboard
-              </Link>
-              {isAgent && (
-                <Link
-                  href="/admin"
+              <div ref={profileRef} style={{ position: "relative" }}>
+                <button
+                  onClick={() => setProfileOpen((o) => !o)}
                   style={{
-                    border: `1.5px solid ${T.navy}`,
-                    color: T.navy,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    border: `1.5px solid ${T.border}`,
+                    color: T.gray1,
                     borderRadius: 8,
-                    padding: "6px 14px",
+                    padding: "6px 12px",
                     fontSize: 13,
                     fontWeight: 700,
+                    background: profileOpen ? T.bg : "#fff",
+                    cursor: "pointer",
                   }}
                 >
-                  Agent Admin
-                </Link>
-              )}
-              {isPlatformAdmin && (
-                <Link
-                  href="/platform-admin"
-                  style={{ border: `1.5px solid ${T.gold}`, color: T.gold, borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 700 }}
-                >
-                  Platform Admin
-                </Link>
-              )}
-              <button
-                onClick={signOut}
-                style={{
-                  background: T.gray4,
-                  color: T.gray1,
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "6px 14px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Sign Out
-              </button>
+                  {fullName ? fullName.split(" ")[0] : "Account"}
+                  <ChevronDown size={14} style={{ transform: profileOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+                </button>
+
+                {profileOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      right: 0,
+                      background: "#fff",
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 10,
+                      boxShadow: T.shadowHover,
+                      minWidth: 200,
+                      padding: 6,
+                      zIndex: 50,
+                    }}
+                  >
+                    <DropdownLink href="/dashboard" icon={LayoutDashboard} label="My Dashboard" onClick={() => setProfileOpen(false)} />
+                    <DropdownLink href="/dashboard/roles" icon={ListChecks} label="My Roles" onClick={() => setProfileOpen(false)} />
+                    {isAgent && <DropdownLink href="/admin" icon={ShieldCheck} label="Agent Admin" onClick={() => setProfileOpen(false)} highlight />}
+                    {isPlatformAdmin && <DropdownLink href="/platform-admin" icon={Crown} label="Platform Admin" onClick={() => setProfileOpen(false)} highlight="gold" />}
+                    <div style={{ height: 1, background: T.border, margin: "6px 4px" }} />
+                    <button
+                      onClick={() => { setProfileOpen(false); signOut(); }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", borderRadius: 6, padding: "8px 10px", fontSize: 13, fontWeight: 600, color: T.gray2, cursor: "pointer", textAlign: "left" }}
+                    >
+                      <LogOut size={15} /> Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -206,22 +256,23 @@ export default function Navbar() {
                   padding: "6px 14px",
                   fontSize: 13,
                   fontWeight: 700,
+                  border: `1.5px solid ${T.border}`,
                 }}
               >
-                Sign In
+                Sign in
               </Link>
               <Link
                 href="/login"
                 style={{
-                  background: T.navy,
+                  background: T.gold,
                   color: "#fff",
-                  borderRadius: 8,
-                  padding: "6px 16px",
+                  borderRadius: 999,
+                  padding: "8px 18px",
                   fontSize: 13,
                   fontWeight: 700,
                 }}
               >
-                Register
+                Get Started
               </Link>
             </>
           )}
@@ -261,17 +312,38 @@ export default function Navbar() {
             gap: 4,
           }}
         >
+          <Link href="/" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Home
+          </Link>
+          <Link href="/about" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            About
+          </Link>
+          <Link href="/how-it-works" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            How It Works
+          </Link>
+          <Link href="/for-contributors" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            For Contributors
+          </Link>
           <Link href="/listings" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-            For Sale / Rent
+            Browse Listings
+          </Link>
+          <Link href="/blog" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Blog
+          </Link>
+          <Link href="/team" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Team
+          </Link>
+          <Link href="/contact" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Contact
           </Link>
           <div style={{ height: 1, background: T.border, margin: "8px 0" }} />
           {user ? (
             <>
-              <Link href="/saved" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-                <Heart size={15} strokeWidth={2.4} /> Saved Properties
-              </Link>
               <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
                 Dashboard
+              </Link>
+              <Link href="/dashboard/roles" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+                My Roles
               </Link>
               {isAgent && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.navy, fontWeight: 700 }}>
@@ -293,23 +365,23 @@ export default function Navbar() {
           ) : (
             <>
               <Link href="/login" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-                Sign In
+                Sign in
               </Link>
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
                 style={{
                   marginTop: 6,
-                  background: T.navy,
+                  background: T.gold,
                   color: "#fff",
-                  borderRadius: 8,
+                  borderRadius: 999,
                   padding: "12px",
                   fontSize: 15,
                   fontWeight: 700,
                   textAlign: "center",
                 }}
               >
-                Register
+                Get Started
               </Link>
             </>
           )}
@@ -327,5 +399,27 @@ export default function Navbar() {
         }
       `}</style>
     </header>
+  );
+}
+
+function DropdownLink({ href, icon: Icon, label, onClick, highlight }) {
+  const color = highlight === "gold" ? T.gold : highlight ? T.navy : T.gray1;
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 9,
+        padding: "9px 10px",
+        borderRadius: 6,
+        fontSize: 13.5,
+        fontWeight: highlight ? 700 : 600,
+        color,
+      }}
+    >
+      <Icon size={15} /> {label}
+    </Link>
   );
 }

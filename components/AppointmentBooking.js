@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
 import { requestAppointment } from "@/lib/appointments-queries";
@@ -15,6 +15,15 @@ export default function AppointmentBooking({ listingId, agentId }) {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);
+  const [isOwnListing, setIsOwnListing] = useState(false);
+  const [checkingOwner, setCheckingOwner] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsOwnListing(!!data.user && data.user.id === agentId);
+      setCheckingOwner(false);
+    });
+  }, [agentId]);
 
   const submit = async () => {
     if (!datetime) {
@@ -30,6 +39,11 @@ export default function AppointmentBooking({ listingId, agentId }) {
       router.push("/login");
       return;
     }
+    if (user.id === agentId) {
+      setSending(false);
+      setError("You can't book a viewing on your own listing.");
+      return;
+    }
 
     try {
       await requestAppointment(listingId, user.id, agentId, new Date(datetime).toISOString(), note);
@@ -39,6 +53,16 @@ export default function AppointmentBooking({ listingId, agentId }) {
     }
     setSending(false);
   };
+
+  if (checkingOwner) return null;
+
+  if (isOwnListing) {
+    return (
+      <div style={{ background: T.bg, color: T.gray2, padding: 14, borderRadius: 8, textAlign: "center", fontSize: 13 }}>
+        This is your own listing — viewing requests aren't available here.
+      </div>
+    );
+  }
 
   if (sent) {
     return (

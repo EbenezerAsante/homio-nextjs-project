@@ -4,9 +4,11 @@ import { useState } from "react";
 import { createListing, updateListing } from "@/lib/admin-queries";
 import { T } from "@/lib/constants";
 import PhotoUploader from "./PhotoUploader";
+import VideoUploader from "./VideoUploader";
 
 const PROPERTY_TYPES = ["house", "apartment", "land", "commercial", "shortlet", "office"];
 const REGIONS = ["Greater Accra", "Ashanti", "Central", "Eastern", "Western", "Volta", "Northern", "Upper East", "Upper West", "Bono"];
+const MIN_PHOTOS = 5;
 
 export default function ListingForm({ userId, existing, onDone, onCancel }) {
   const [form, setForm] = useState({
@@ -19,6 +21,7 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
     region: existing?.region || "",
     city: existing?.city || "",
     address: existing?.address || "",
+    plot_size: existing?.plot_size || "",
     bedrooms: existing?.bedrooms || "",
     bathrooms: existing?.bathrooms || "",
     furnished: existing?.furnished || false,
@@ -27,6 +30,7 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
   const [error, setError] = useState(null);
   const [savedListing, setSavedListing] = useState(existing || null);
   const [images, setImages] = useState(existing?.images || []);
+  const [videoUrl, setVideoUrl] = useState(existing?.video_url || null);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -88,6 +92,7 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
         </select>
         <input style={inputStyle} placeholder="City / Town" value={form.city} onChange={(e) => set("city", e.target.value)} />
         <input style={inputStyle} placeholder="Address" value={form.address} onChange={(e) => set("address", e.target.value)} />
+        <input style={inputStyle} placeholder="Plot Size (e.g. 0.5 acre, 100x100 ft)" value={form.plot_size} onChange={(e) => set("plot_size", e.target.value)} />
         <input style={inputStyle} placeholder="Bedrooms" type="number" value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} />
         <input style={inputStyle} placeholder="Bathrooms" type="number" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} />
       </div>
@@ -105,14 +110,39 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
 
       {savedListing && (
         <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 20 }}>
-          <h4 style={{ fontSize: 14, marginBottom: 10, color: T.text }}>Photos</h4>
+          <h4 style={{ fontSize: 14, marginBottom: 10, color: T.text }}>
+            Photos <span style={{ fontWeight: 400, fontSize: 12.5, color: images.length >= MIN_PHOTOS ? T.green : T.gold }}>
+              ({images.length}/{MIN_PHOTOS} minimum)
+            </span>
+          </h4>
           <PhotoUploader
             agentId={userId}
             listingId={savedListing.id}
             images={images}
             onChange={setImages}
           />
-          <button className="admin-btn admin-btn-primary" style={{ marginTop: 16 }} onClick={onDone}>
+
+          <div style={{ marginTop: 20 }}>
+            <VideoUploader
+              agentId={userId}
+              listingId={savedListing.id}
+              videoUrl={videoUrl}
+              onChange={setVideoUrl}
+            />
+          </div>
+
+          {images.length < MIN_PHOTOS && (
+            <div style={{ color: T.gold, fontSize: 12.5, marginTop: 12 }}>
+              Add at least {MIN_PHOTOS - images.length} more photo{MIN_PHOTOS - images.length > 1 ? "s" : ""} before finishing your listing.
+            </div>
+          )}
+
+          <button
+            className="admin-btn admin-btn-primary"
+            style={{ marginTop: 16, opacity: images.length < MIN_PHOTOS ? 0.5 : 1, cursor: images.length < MIN_PHOTOS ? "not-allowed" : "pointer" }}
+            onClick={() => images.length >= MIN_PHOTOS && onDone()}
+            disabled={images.length < MIN_PHOTOS}
+          >
             Done
           </button>
         </div>
