@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, approveApplication, rejectApplication, revokeApplication } from "@/lib/platform-admin-queries";
-import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound } from "lucide-react";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
+import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList } from "lucide-react";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -104,12 +104,15 @@ function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
 }
 
 export default function PlatformAdminQueue({ adminName }) {
+  const [activeView, setActiveView] = useState("applications"); // applications | contact
   const [activeRole, setActiveRole] = useState("agent");
   const [apps, setApps] = useState([]);
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [filter, setFilter] = useState("pending"); // pending | all
+  const [contactMessages, setContactMessages] = useState([]);
+  const [contactLoading, setContactLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -125,6 +128,15 @@ export default function PlatformAdminQueue({ adminName }) {
   useEffect(() => {
     load();
   }, [activeRole, filter]);
+
+  useEffect(() => {
+    if (activeView !== "contact") return;
+    setContactLoading(true);
+    fetchContactMessages().then((data) => {
+      setContactMessages(data);
+      setContactLoading(false);
+    });
+  }, [activeView]);
 
   const handleApprove = async (role, userId) => {
     setBusyId(userId);
@@ -167,10 +179,71 @@ export default function PlatformAdminQueue({ adminName }) {
         <p style={{ color: T.gold, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>
           Platform Admin
         </p>
-        <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 26, margin: "0 0 24px" }}>
-          Application Review Queue
+        <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 26, margin: "0 0 20px" }}>
+          Platform Administration
         </h1>
 
+        {/* Top-level view switcher */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}` }}>
+          <button
+            onClick={() => setActiveView("applications")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
+              color: activeView === "applications" ? T.navy : T.gray2,
+              borderBottom: activeView === "applications" ? `2px solid ${T.navy}` : "2px solid transparent",
+            }}
+          >
+            <ClipboardList size={15} /> Applications
+          </button>
+          <button
+            onClick={() => setActiveView("contact")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", fontSize: 14, fontWeight: 700,
+              color: activeView === "contact" ? T.navy : T.gray2,
+              borderBottom: activeView === "contact" ? `2px solid ${T.navy}` : "2px solid transparent",
+            }}
+          >
+            <Mail size={15} /> Contact Messages
+            {contactMessages.length > 0 && (
+              <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
+                {contactMessages.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeView === "contact" ? (
+          contactLoading ? (
+            <div style={{ color: T.gray2, padding: 40, textAlign: "center" }}>Loading messages…</div>
+          ) : contactMessages.length === 0 ? (
+            <div style={{ background: "#fff", border: `1px dashed ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: T.gray2 }}>
+              <Mail size={28} color={T.gray2} style={{ marginBottom: 10 }} />
+              <div>No contact messages yet.</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {contactMessages.map((m) => (
+                <div key={m.id} style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 10, padding: 18, boxShadow: T.shadow }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 14.5, color: T.navy }}>{m.name}</div>
+                      <a href={`mailto:${m.email}`} style={{ fontSize: 12.5, color: T.gray2 }}>{m.email}</a>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: T.gray2, whiteSpace: "nowrap" }}>
+                      {new Date(m.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 13.5, color: T.gray1, lineHeight: 1.6 }}>{m.message}</div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+        <>
         {/* Role tabs */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
           {APPROVAL_ROLES.map((role) => {
@@ -249,6 +322,8 @@ export default function PlatformAdminQueue({ adminName }) {
               />
             ))}
           </div>
+        )}
+        </>
         )}
       </div>
     </div>
