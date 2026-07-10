@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { T, fmt } from "../lib/constants";
 import { createClient } from "../lib/supabase-client";
-import { MapPin, BedDouble, Bath, Ruler } from "lucide-react";
+import { MapPin, BedDouble, Bath, Ruler, BadgeCheck } from "lucide-react";
 
 function Pill({ label, color, bg }) {
   return (
@@ -165,10 +165,15 @@ export default function PropertyCard({ p }) {
           <div style={{ fontSize: 13, fontWeight: 600, color: T.gray1, marginBottom: 4, lineHeight: 1.4 }}>
             {p.title}
           </div>
-          <div style={{ fontSize: 12, color: T.gray2, marginBottom: 10, display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ fontSize: 12, color: T.gray2, marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
             <MapPin size={12} strokeWidth={2.2} style={{ flexShrink: 0 }} />
             {p.city}, {p.region}
           </div>
+          {p.ownerType?.verified && (
+            <div style={{ fontSize: 11, color: T.green, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
+              <BadgeCheck size={13} strokeWidth={2.4} /> {p.ownerType.label}
+            </div>
+          )}
           <div
             style={{
               borderTop: `1px solid ${T.gray4}`,

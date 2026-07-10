@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { createListing, updateListing } from "@/lib/admin-queries";
-import { T } from "@/lib/constants";
+import { T, getCoords } from "@/lib/constants";
 import PhotoUploader from "./PhotoUploader";
 import VideoUploader from "./VideoUploader";
+import LocationPicker from "./LocationPicker";
 
 const PROPERTY_TYPES = ["house", "apartment", "land", "commercial", "shortlet", "office"];
 const REGIONS = ["Greater Accra", "Ashanti", "Central", "Eastern", "Western", "Volta", "Northern", "Upper East", "Upper West", "Bono"];
@@ -25,6 +26,8 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
     bedrooms: existing?.bedrooms || "",
     bathrooms: existing?.bathrooms || "",
     furnished: existing?.furnished || false,
+    latitude: existing?.latitude || null,
+    longitude: existing?.longitude || null,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -43,6 +46,8 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
         price: form.price ? Number(form.price) : null,
         bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
         bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+        latitude: form.latitude != null ? Number(form.latitude) : null,
+        longitude: form.longitude != null ? Number(form.longitude) : null,
         agent_id: userId,
       };
 
@@ -95,6 +100,17 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
         <input style={inputStyle} placeholder="Plot Size (e.g. 0.5 acre, 100x100 ft)" value={form.plot_size} onChange={(e) => set("plot_size", e.target.value)} />
         <input style={inputStyle} placeholder="Bedrooms" type="number" value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} />
         <input style={inputStyle} placeholder="Bathrooms" type="number" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} />
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: T.gray1, marginBottom: 6 }}>
+          Exact Location
+        </label>
+        <LocationPicker
+          latitude={form.latitude || getCoords(form.city, form.region)[0]}
+          longitude={form.longitude || getCoords(form.city, form.region)[1]}
+          onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+        />
       </div>
 
       {error && <div style={{ color: T.red, fontSize: 13, marginBottom: 12 }}>{error}</div>}

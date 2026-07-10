@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-server";
-import PropertyCard from "../../components/PropertyCard";
+import ListingsViewToggle from "../../components/ListingsViewToggle";
 import { T, REGIONS, CAT_LABEL } from "../../lib/constants";
+import { fetchOwnerTypeMap, withOwnerTypes } from "../../lib/badge-queries";
 
 export const revalidate = 30;
 
@@ -43,6 +44,8 @@ export default async function ListingsPage({ searchParams }) {
   else query = query.order("created_at", { ascending: false });
 
   const { data: listings, error } = await query;
+  const ownerTypeMap = await fetchOwnerTypeMap(supabase);
+  const listingsWithBadges = withOwnerTypes(listings || [], ownerTypeMap);
 
   const buildHref = (overrides) => {
     const params = new URLSearchParams({
@@ -237,18 +240,7 @@ export default async function ListingsPage({ searchParams }) {
           )}
 
           {!error && listings && listings.length > 0 && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(280px,300px))",
-                justifyContent: "start",
-                gap: 20,
-              }}
-            >
-              {listings.map((p) => (
-                <PropertyCard key={p.id} p={p} />
-              ))}
-            </div>
+            <ListingsViewToggle listings={listingsWithBadges} />
           )}
         </div>
       </div>

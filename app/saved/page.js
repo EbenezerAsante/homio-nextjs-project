@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 import PropertyCard from "../../components/PropertyCard";
 import { T } from "../../lib/constants";
+import { fetchOwnerTypeMap, withOwnerTypes } from "../../lib/badge-queries";
 
 export default function SavedPropertiesPage() {
   const supabase = createClient();
@@ -39,14 +40,15 @@ export default function SavedPropertiesPage() {
       }
 
       const listingIds = favRows.map((r) => r.listing_id);
-      const { data: listingRows } = await supabase
-        .from("listings")
-        .select("*, listing_images(url, sort_order)")
-        .in("id", listingIds);
+      const [{ data: listingRows }, ownerTypeMap] = await Promise.all([
+        supabase.from("listings").select("*, listing_images(url, sort_order)").in("id", listingIds),
+        fetchOwnerTypeMap(supabase),
+      ]);
+      const enriched = withOwnerTypes(listingRows || [], ownerTypeMap);
 
       // Preserve the saved order (most recently favorited first)
       const ordered = listingIds
-        .map((id) => listingRows?.find((l) => l.id === id))
+        .map((id) => enriched.find((l) => l.id === id))
         .filter(Boolean);
 
       if (mounted) setListings(ordered);

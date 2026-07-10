@@ -3,6 +3,7 @@ import { createClient } from "../lib/supabase-server";
 import PropertyCard from "../components/PropertyCard";
 import SearchWidget from "../components/SearchWidget";
 import { T } from "../lib/constants";
+import { fetchOwnerTypeMap, withOwnerTypes } from "../lib/badge-queries";
 
 export const revalidate = 60; // re-fetch listings + stats every 60s
 
@@ -12,28 +13,29 @@ const HERO_IMAGE_URL =
 export default async function HomePage() {
   const supabase = createClient();
 
-  const { data: featured } = await supabase
-    .from("listings")
-    .select("*, listing_images(url, sort_order)")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  const { data: forSale } = await supabase
-    .from("listings")
-    .select("*, listing_images(url, sort_order)")
-    .eq("status", "active")
-    .eq("listing_type", "sale")
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  const { data: toLet } = await supabase
-    .from("listings")
-    .select("*, listing_images(url, sort_order)")
-    .eq("status", "active")
-    .eq("listing_type", "rent")
-    .order("created_at", { ascending: false })
-    .limit(3);
+  const [{ data: featured }, { data: forSale }, { data: toLet }, ownerTypeMap] = await Promise.all([
+    supabase
+      .from("listings")
+      .select("*, listing_images(url, sort_order)")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("listings")
+      .select("*, listing_images(url, sort_order)")
+      .eq("status", "active")
+      .eq("listing_type", "sale")
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("listings")
+      .select("*, listing_images(url, sort_order)")
+      .eq("status", "active")
+      .eq("listing_type", "rent")
+      .order("created_at", { ascending: false })
+      .limit(3),
+    fetchOwnerTypeMap(supabase),
+  ]);
 
   // Live stats — real counts, not placeholders
   const { count: listingsCount } = await supabase
@@ -197,17 +199,17 @@ export default async function HomePage() {
 
       {/* Featured */}
       <Section title="Featured Properties" sub="Handpicked by our team" href="/listings">
-        <Grid items={featured} />
+        <Grid items={withOwnerTypes(featured || [], ownerTypeMap)} />
       </Section>
 
       {/* For Sale */}
       <Section title="Recently Listed — For Sale" sub="Latest homes on the market" href="/listings?type=sale">
-        <Grid items={forSale} />
+        <Grid items={withOwnerTypes(forSale || [], ownerTypeMap)} />
       </Section>
 
       {/* To Let */}
       <Section title="Recently Listed — To Let" sub="Find your next rental" bg={T.bg} href="/listings?type=rent">
-        <Grid items={toLet} />
+        <Grid items={withOwnerTypes(toLet || [], ownerTypeMap)} />
       </Section>
 
       {/* How it works */}
@@ -477,18 +479,33 @@ function Footer() {
             Company
           </p>
           <Link href="/login" style={linkStyle}>Sign In</Link>
-          <a href="#" style={linkStyle}>About Homio</a>
-          <a href="#" style={linkStyle}>Contact</a>
+          <Link href="/about" style={linkStyle}>About Homio</Link>
+          <Link href="/how-it-works" style={linkStyle}>How It Works</Link>
+          <Link href="/contact" style={linkStyle}>Contact</Link>
         </div>
 
         {/* Contact */}
         <div>
           <p style={{ color: "#fff", fontWeight: 700, fontSize: 13, letterSpacing: 1, textTransform: "uppercase", marginBottom: 14 }}>
-            Contact
+            Get in Touch
           </p>
-          <p style={{ ...linkStyle, cursor: "default" }}>hello@homio.gh</p>
-          <p style={{ ...linkStyle, cursor: "default" }}>Kumasi, Ghana</p>
-          <p style={{ ...linkStyle, cursor: "default" }}>Accra, Ghana</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, margin: "0 0 14px" }}>
+            Questions or feedback? Send us a message and we'll get back to you.
+          </p>
+          <Link
+            href="/contact"
+            style={{
+              display: "inline-block",
+              background: T.gold,
+              color: "#fff",
+              borderRadius: 999,
+              padding: "9px 20px",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            Contact Us
+          </Link>
         </div>
       </div>
 
