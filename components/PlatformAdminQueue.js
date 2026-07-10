@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
-import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList } from "lucide-react";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
+import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare } from "lucide-react";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -25,6 +25,20 @@ const FIELD_LABELS = {
   services: "Services",
   areas_managed: "Areas Managed",
 };
+
+function StatCard({ icon: Icon, label, value, accent }) {
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, boxShadow: T.shadow }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 8, background: accent + "22", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon size={17} color={accent} />
+        </div>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: T.gray2 }}>{label}</span>
+      </div>
+      <div style={{ fontSize: 28, fontWeight: 900, color: T.navy }}>{value}</div>
+    </div>
+  );
+}
 
 function StatusBadge({ status }) {
   const map = {
@@ -104,15 +118,25 @@ function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
 }
 
 export default function PlatformAdminQueue({ adminName }) {
-  const [activeView, setActiveView] = useState("applications"); // applications | contact
+  const [activeView, setActiveView] = useState("overview"); // overview | applications | contact
   const [activeRole, setActiveRole] = useState("agent");
   const [apps, setApps] = useState([]);
   const [counts, setCounts] = useState({});
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [filter, setFilter] = useState("pending"); // pending | all
   const [contactMessages, setContactMessages] = useState([]);
   const [contactLoading, setContactLoading] = useState(true);
+
+  useEffect(() => {
+    setStatsLoading(true);
+    fetchPlatformStats().then((data) => {
+      setStats(data);
+      setStatsLoading(false);
+    });
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -186,6 +210,18 @@ export default function PlatformAdminQueue({ adminName }) {
         {/* Top-level view switcher */}
         <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}` }}>
           <button
+            onClick={() => setActiveView("overview")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
+              color: activeView === "overview" ? T.navy : T.gray2,
+              borderBottom: activeView === "overview" ? `2px solid ${T.navy}` : "2px solid transparent",
+            }}
+          >
+            <LayoutDashboard size={15} /> Overview
+          </button>
+          <button
             onClick={() => setActiveView("applications")}
             style={{
               display: "flex", alignItems: "center", gap: 6,
@@ -216,7 +252,51 @@ export default function PlatformAdminQueue({ adminName }) {
           </button>
         </div>
 
-        {activeView === "contact" ? (
+        {activeView === "overview" ? (
+          statsLoading || !stats ? (
+            <div style={{ color: T.gray2, padding: 40, textAlign: "center" }}>Loading platform stats…</div>
+          ) : (
+            <>
+              <p style={{ fontSize: 13, color: T.gray2, marginBottom: 16 }}>
+                Welcome back, {adminName || "Admin"}. Here's the platform at a glance.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16, marginBottom: 28 }}>
+                <StatCard icon={Users} label="Total Users" value={stats.totalUsers} accent={T.navy} />
+                <StatCard icon={Home} label="Total Listings" value={stats.totalListings} accent={T.gold} />
+                <StatCard icon={CheckCircle2} label="Active Listings" value={stats.activeListings} accent={T.green} />
+                <StatCard icon={Briefcase} label="Active Agents" value={stats.activeAgents} accent={T.navy} />
+                <StatCard icon={MessageSquare} label="Total Enquiries" value={stats.totalEnquiries} accent={T.gold} />
+                <StatCard icon={Clock} label="Pending Approvals" value={stats.totalPending} accent={T.red} />
+              </div>
+
+              {stats.totalPending > 0 && (
+                <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+                  <p style={{ fontWeight: 800, color: T.navy, fontSize: 14, margin: "0 0 12px" }}>Pending by Role</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {APPROVAL_ROLES.filter((r) => stats.pendingByRole[r] > 0).map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => { setActiveRole(r); setFilter("pending"); setActiveView("applications"); }}
+                        style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          background: T.bg, border: "none", borderRadius: 8, padding: "10px 14px",
+                          cursor: "pointer", textAlign: "left",
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 600, color: T.gray1, textTransform: "capitalize" }}>
+                          {r.replace("_", " ")}
+                        </span>
+                        <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 11, fontWeight: 700, padding: "2px 9px" }}>
+                          {stats.pendingByRole[r]} pending
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )
+        ) : activeView === "contact" ? (
           contactLoading ? (
             <div style={{ color: T.gray2, padding: 40, textAlign: "center" }}>Loading messages…</div>
           ) : contactMessages.length === 0 ? (
