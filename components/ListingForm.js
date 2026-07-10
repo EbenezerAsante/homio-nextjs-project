@@ -55,7 +55,7 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
       if (savedListing) {
         result = await updateListing(savedListing.id, payload);
       } else {
-        result = await createListing({ ...payload, status: "active" });
+        result = await createListing({ ...payload, status: "pending" });
       }
       setSavedListing(result);
     } catch (err) {

@@ -20,6 +20,14 @@ export default async function PropertyDetail({ params }) {
 
   if (!p) return notFound();
 
+  // Non-active listings (pending review / rejected) are hidden from the public,
+  // but the agent who owns the listing can still preview it themselves.
+  if (p.status !== "active") {
+    const { data: authData } = await supabase.auth.getUser();
+    const isOwner = authData?.user?.id === p.agent_id;
+    if (!isOwner) return notFound();
+  }
+
   // increment view count (best-effort, ignore errors)
   await supabase.from("listings").update({ view_count: (p.view_count || 0) + 1 }).eq("id", p.id);
 

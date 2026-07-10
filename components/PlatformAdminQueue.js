@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
 import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare } from "lucide-react";
 
 const ROLE_META = {
@@ -25,6 +25,42 @@ const FIELD_LABELS = {
   services: "Services",
   areas_managed: "Areas Managed",
 };
+
+function ListingCard({ listing, onApprove, onReject, busy }) {
+  const cover = listing.listing_images?.[0]?.url;
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden", boxShadow: T.shadow }}>
+      {cover && <img src={cover} alt={listing.title} style={{ width: "100%", height: 140, objectFit: "cover" }} />}
+      <div style={{ padding: 16 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: T.navy, marginBottom: 4 }}>
+          {listing.currency || "GHS"} {Number(listing.price).toLocaleString()}
+          {listing.listing_type === "rent" && <span style={{ fontWeight: 400, fontSize: 12, color: T.gray2 }}> / month</span>}
+        </div>
+        <div style={{ fontSize: 13, color: T.gray1, marginBottom: 4 }}>{listing.title}</div>
+        <div style={{ fontSize: 12, color: T.gray2, marginBottom: 10 }}>{listing.city}, {listing.region}</div>
+        <div style={{ fontSize: 12, color: T.gray2, marginBottom: 14, paddingTop: 10, borderTop: `1px solid ${T.border}` }}>
+          Agent: {listing.agents?.full_name || "Unknown"} {listing.agents?.company ? `· ${listing.agents.company}` : ""}
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={() => onApprove(listing.id)}
+            disabled={busy}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: T.green, color: "#fff", border: "none", borderRadius: 8, padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+          >
+            <CheckCircle2 size={15} /> Approve
+          </button>
+          <button
+            onClick={() => onReject(listing.id)}
+            disabled={busy}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#fff", color: T.red, border: `1.5px solid ${T.red}`, borderRadius: 8, padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+          >
+            <XCircle size={15} /> Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ icon: Icon, label, value, accent }) {
   return (
@@ -129,6 +165,9 @@ export default function PlatformAdminQueue({ adminName }) {
   const [filter, setFilter] = useState("pending"); // pending | all
   const [contactMessages, setContactMessages] = useState([]);
   const [contactLoading, setContactLoading] = useState(true);
+  const [pendingListings, setPendingListings] = useState([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
+  const [listingBusyId, setListingBusyId] = useState(null);
 
   useEffect(() => {
     setStatsLoading(true);
@@ -161,6 +200,41 @@ export default function PlatformAdminQueue({ adminName }) {
       setContactLoading(false);
     });
   }, [activeView]);
+
+  useEffect(() => {
+    if (activeView !== "listings") return;
+    loadPendingListings();
+  }, [activeView]);
+
+  const loadPendingListings = async () => {
+    setListingsLoading(true);
+    const data = await fetchPendingListings();
+    setPendingListings(data);
+    setListingsLoading(false);
+  };
+
+  const handleApproveListing = async (id) => {
+    setListingBusyId(id);
+    try {
+      await approveListing(id);
+      await loadPendingListings();
+    } catch (e) {
+      alert(e.message || "Failed to approve listing");
+    }
+    setListingBusyId(null);
+  };
+
+  const handleRejectListing = async (id) => {
+    const reason = prompt("Reason for rejecting this listing (optional):") || null;
+    setListingBusyId(id);
+    try {
+      await rejectListing(id, reason);
+      await loadPendingListings();
+    } catch (e) {
+      alert(e.message || "Failed to reject listing");
+    }
+    setListingBusyId(null);
+  };
 
   const handleApprove = async (role, userId) => {
     setBusyId(userId);
@@ -222,6 +296,23 @@ export default function PlatformAdminQueue({ adminName }) {
             <LayoutDashboard size={15} /> Overview
           </button>
           <button
+            onClick={() => setActiveView("listings")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
+              color: activeView === "listings" ? T.navy : T.gray2,
+              borderBottom: activeView === "listings" ? `2px solid ${T.navy}` : "2px solid transparent",
+            }}
+          >
+            <Home size={15} /> Listings
+            {pendingListings.length > 0 && (
+              <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
+                {pendingListings.length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveView("applications")}
             style={{
               display: "flex", alignItems: "center", gap: 6,
@@ -264,6 +355,7 @@ export default function PlatformAdminQueue({ adminName }) {
                 <StatCard icon={Users} label="Total Users" value={stats.totalUsers} accent={T.navy} />
                 <StatCard icon={Home} label="Total Listings" value={stats.totalListings} accent={T.gold} />
                 <StatCard icon={CheckCircle2} label="Active Listings" value={stats.activeListings} accent={T.green} />
+                <StatCard icon={Clock} label="Listings Awaiting Review" value={stats.pendingListings} accent={T.gold} />
                 <StatCard icon={Briefcase} label="Active Agents" value={stats.activeAgents} accent={T.navy} />
                 <StatCard icon={MessageSquare} label="Total Enquiries" value={stats.totalEnquiries} accent={T.gold} />
                 <StatCard icon={Clock} label="Pending Approvals" value={stats.totalPending} accent={T.red} />
@@ -295,6 +387,27 @@ export default function PlatformAdminQueue({ adminName }) {
                 </div>
               )}
             </>
+          )
+        ) : activeView === "listings" ? (
+          listingsLoading ? (
+            <div style={{ color: T.gray2, padding: 40, textAlign: "center" }}>Loading pending listings…</div>
+          ) : pendingListings.length === 0 ? (
+            <div style={{ background: "#fff", border: `1px dashed ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: T.gray2 }}>
+              <Home size={28} color={T.gray2} style={{ marginBottom: 10 }} />
+              <div>No listings waiting for review.</div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 16 }}>
+              {pendingListings.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  onApprove={handleApproveListing}
+                  onReject={handleRejectListing}
+                  busy={listingBusyId === listing.id}
+                />
+              ))}
+            </div>
           )
         ) : activeView === "contact" ? (
           contactLoading ? (

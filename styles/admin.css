@@ -149,7 +149,7 @@
 
 .admin-badge.active { background: #DCFCE7; color: #166534; }
 .admin-badge.pending { background: #FEF3C7; color: #92400E; }
-.admin-badge.taken, .admin-badge.expired { background: #FEE2E2; color: #991B1B; }
+.admin-badge.taken, .admin-badge.expired, .admin-badge.rejected { background: #FEE2E2; color: #991B1B; }
 
 /* Buttons */
 .admin-btn {
