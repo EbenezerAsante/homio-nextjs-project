@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { T } from "@/lib/constants";
 import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
-import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink } from "lucide-react";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -41,6 +42,19 @@ function ListingCard({ listing, onApprove, onReject, busy }) {
         <div style={{ fontSize: 12, color: T.gray2, marginBottom: 14, paddingTop: 10, borderTop: `1px solid ${T.border}` }}>
           Agent: {listing.agents?.full_name || "Unknown"} {listing.agents?.company ? `· ${listing.agents.company}` : ""}
         </div>
+        <Link
+          href={`/property/${listing.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            fontSize: 12.5, fontWeight: 700, color: T.navy,
+            border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "8px 0",
+            marginBottom: 10, textDecoration: "none",
+          }}
+        >
+          View Full Listing <ExternalLink size={13} />
+        </Link>
         <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={() => onApprove(listing.id)}

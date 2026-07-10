@@ -21,11 +21,23 @@ export default async function PropertyDetail({ params }) {
   if (!p) return notFound();
 
   // Non-active listings (pending review / rejected) are hidden from the public,
-  // but the agent who owns the listing can still preview it themselves.
+  // but the agent who owns the listing, or a platform admin, can preview it.
   if (p.status !== "active") {
     const { data: authData } = await supabase.auth.getUser();
-    const isOwner = authData?.user?.id === p.agent_id;
-    if (!isOwner) return notFound();
+    const currentUserId = authData?.user?.id;
+    const isOwner = currentUserId === p.agent_id;
+
+    let isAdmin = false;
+    if (currentUserId && !isOwner) {
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("is_platform_admin")
+        .eq("id", currentUserId)
+        .maybeSingle();
+      isAdmin = !!profileRow?.is_platform_admin;
+    }
+
+    if (!isOwner && !isAdmin) return notFound();
   }
 
   // increment view count (best-effort, ignore errors)
