@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createListing, updateListing } from "@/lib/admin-queries";
+import { isTrustedLister } from "@/lib/badge-queries";
+import { createClient } from "@/lib/supabase-client";
 import { T, getCoords } from "@/lib/constants";
 import PhotoUploader from "./PhotoUploader";
 import VideoUploader from "./VideoUploader";
@@ -55,7 +57,9 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
       if (savedListing) {
         result = await updateListing(savedListing.id, payload);
       } else {
-        result = await createListing({ ...payload, status: "pending" });
+        const supabase = createClient();
+        const trusted = await isTrustedLister(supabase, userId);
+        result = await createListing({ ...payload, status: trusted ? "active" : "pending" });
       }
       setSavedListing(result);
     } catch (err) {
