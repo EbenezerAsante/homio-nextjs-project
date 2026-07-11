@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, ShieldCheck } from "lucide-react";
+import { Search, ShieldCheck, Ban, CheckCircle } from "lucide-react";
 import { T } from "@/lib/constants";
 import { fetchAllUsers } from "@/lib/platform-admin-queries";
+import { createClient } from "@/lib/supabase-client";
 
 const ROLE_COLORS = {
   Admin: { bg: "#EDE9FE", color: "#5B21B6" },
@@ -47,6 +48,8 @@ export default function UserManagementTab() {
   const [users, setUsers] = useState(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
 
   const load = async (term = "") => {
     setLoading(true);
@@ -62,7 +65,30 @@ export default function UserManagementTab() {
 
   useEffect(() => {
     load();
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data?.user?.id || null));
   }, []);
+
+  const handleToggleStatus = async (user) => {
+    const action = user.account_status === "suspended" ? "activate" : "suspend";
+    if (action === "suspend" && !confirm(`Suspend ${user.full_name || user.email}? They won't be able to sign in until reactivated.`)) {
+      return;
+    }
+    setBusyId(user.id);
+    try {
+      const res = await fetch("/api/admin/toggle-user-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, action }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to update user status");
+      await load(search);
+    } catch (e) {
+      alert(e.message);
+    }
+    setBusyId(null);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -120,7 +146,9 @@ export default function UserManagementTab() {
                 <th style={thStyle}>Email</th>
                 <th style={thStyle}>Phone</th>
                 <th style={thStyle}>Roles</th>
+                <th style={thStyle}>Status</th>
                 <th style={thStyle}>Joined</th>
+                <th style={thStyle}></th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +161,47 @@ export default function UserManagementTab() {
                     {u.roles.map((r, i) => <RoleBadge key={i} role={r} />)}
                   </td>
                   <td style={tdStyle}>
+                    <span
+                      style={{
+                        background: u.account_status === "suspended" ? "#FEE2E2" : "#DCFCE7",
+                        color: u.account_status === "suspended" ? "#991B1B" : "#166534",
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "3px 9px",
+                      }}
+                    >
+                      {u.account_status === "suspended" ? "Suspended" : "Active"}
+                    </span>
+                  </td>
+                  <td style={tdStyle}>
                     {u.created_at ? new Date(u.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                  </td>
+                  <td style={tdStyle}>
+                    {u.id === currentUserId ? (
+                      <span style={{ fontSize: 11.5, color: T.gray3 }}>(you)</span>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleStatus(u)}
+                        disabled={busyId === u.id}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 5,
+                          background: "none",
+                          border: `1.5px solid ${u.account_status === "suspended" ? T.green : T.red}`,
+                          color: u.account_status === "suspended" ? T.green : T.red,
+                          borderRadius: 6,
+                          padding: "5px 10px",
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          cursor: busyId === u.id ? "default" : "pointer",
+                          opacity: busyId === u.id ? 0.6 : 1,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {u.account_status === "suspended" ? <CheckCircle size={12} /> : <Ban size={12} />}
+                        {u.account_status === "suspended" ? "Activate" : "Suspend"}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
