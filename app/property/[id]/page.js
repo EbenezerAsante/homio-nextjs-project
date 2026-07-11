@@ -4,7 +4,7 @@ import { T, fmt, CAT_LABEL, getCoords } from "../../../lib/constants";
 import { getDisplayCoords } from "../../../lib/location-utils";
 import EnquiryForm from "../../../components/EnquiryForm";
 import AppointmentBooking from "../../../components/AppointmentBooking";
-import PropertyMap from "../../../components/PropertyMap";
+import CollapsibleLocationSection from "../../../components/CollapsibleLocationSection";
 import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
 
@@ -98,7 +98,7 @@ export default async function PropertyDetail({ params }) {
 
             <div style={{ background: "#fff", borderRadius: 10, padding: 24, marginBottom: 16, border: `1px solid ${T.border}` }}>
               <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 24, margin: "0 0 6px" }}>{p.title}</h1>
-              <p style={{ color: T.gray2, margin: "0 0 14px", fontSize: 14 }}>📍 {p.city}, {p.region}</p>
+              <p style={{ color: T.gray2, margin: "0 0 14px", fontSize: 14 }}>📍 {p.area ? `${p.area}, ` : ""}{p.city}, {p.region}</p>
               <div style={{ fontSize: 32, fontWeight: 900, color: T.gold }}>
                 {fmt(p.price, p.listing_type)}
                 {p.listing_type === "rent" && <span style={{ fontSize: 16, color: T.gray2, fontWeight: 400 }}> per month</span>}
@@ -138,33 +138,7 @@ export default async function PropertyDetail({ params }) {
               </div>
             )}
 
-            <div style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}` }}>
-              <h3 style={{ margin: "0 0 12px", color: T.navy, fontSize: 16 }}>Location</h3>
-              {displayCoords ? (
-                <>
-                  <PropertyMap
-                    latitude={displayCoords.lat}
-                    longitude={displayCoords.lng}
-                    title={p.title}
-                    city={p.city}
-                    region={p.region}
-                  />
-                  <p style={{ fontSize: 12, color: T.gray3, marginTop: 10 }}>
-                    📍 {p.area ? `${p.area}, ` : ""}{p.city}, {p.region}
-                    {!displayCoords.exact && " (approximate location)"}
-                  </p>
-                </>
-              ) : (
-                <div style={{ background: T.bg, borderRadius: 8, padding: "32px 20px", textAlign: "center" }}>
-                  <p style={{ color: T.gray2, fontSize: 13.5, margin: "0 0 4px", fontWeight: 700 }}>
-                    Exact location available after your viewing is confirmed
-                  </p>
-                  <p style={{ color: T.gray2, fontSize: 12.5, margin: 0 }}>
-                    📍 {p.area ? `${p.area}, ` : ""}{p.city}, {p.region}
-                  </p>
-                </div>
-              )}
-            </div>
+            <CollapsibleLocationSection p={p} displayCoords={displayCoords} />
           </div>
 
           <div className="homio-detail-sidebar" style={{ width: 320, flexShrink: 0 }}>

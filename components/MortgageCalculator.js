@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { ChevronDown } from "lucide-react";
 import { T } from "../lib/constants";
 
 export default function MortgageCalculator({ price }) {
+  const [open, setOpen] = useState(false);
   const [downPaymentPct, setDownPaymentPct] = useState(20);
   const [interestRate, setInterestRate] = useState(24); // typical Ghana mortgage rate range
   const [years, setYears] = useState(15);
@@ -39,12 +41,35 @@ export default function MortgageCalculator({ price }) {
 
   return (
     <div style={{ background: "#fff", borderRadius: 10, padding: 24, marginBottom: 16, border: `1px solid ${T.border}` }}>
-      <h3 style={{ margin: "0 0 4px", color: T.navy, fontSize: 16 }}>Mortgage Calculator</h3>
-      <p style={{ margin: "0 0 20px", fontSize: 12.5, color: T.gray3 }}>
-        Estimate only — actual rates and terms vary by bank.
-      </p>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          marginBottom: open ? 4 : 0,
+        }}
+      >
+        <h3 style={{ margin: 0, color: T.navy, fontSize: 16 }}>🧮 Mortgage Calculator</h3>
+        <ChevronDown
+          size={18}
+          color={T.gray2}
+          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+        />
+      </button>
 
-      <div style={sliderRow}>
+      {open && (
+        <>
+          <p style={{ margin: "0 0 20px", fontSize: 12.5, color: T.gray3 }}>
+            Estimate only — actual rates and terms vary by bank.
+          </p>
+
+          <div style={sliderRow}>
         <div style={labelRow}>
           <span>Down Payment</span>
           <span style={{ fontWeight: 700, color: T.navy }}>{downPaymentPct}% ({fmtGHS(downPaymentAmount)})</span>
@@ -112,6 +137,8 @@ export default function MortgageCalculator({ price }) {
           <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.gray1 }}>{fmtGHS(loanAmount)}</p>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

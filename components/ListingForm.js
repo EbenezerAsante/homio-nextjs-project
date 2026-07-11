@@ -98,37 +98,53 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
           {PROPERTY_TYPES.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
         <input style={inputStyle} placeholder="Price" type="number" value={form.price} onChange={(e) => set("price", e.target.value)} />
-        <select style={inputStyle} value={form.region} onChange={(e) => set("region", e.target.value)}>
-          <option value="">Select Region</option>
-          {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <input style={inputStyle} placeholder="City / Town" value={form.city} onChange={(e) => set("city", e.target.value)} />
-        <input style={inputStyle} placeholder="Address" value={form.address} onChange={(e) => set("address", e.target.value)} />
-        <input style={inputStyle} placeholder="Area / Neighbourhood (e.g. East Legon)" value={form.area} onChange={(e) => set("area", e.target.value)} />
-        <input style={inputStyle} placeholder="Digital Address (e.g. AK-039-5028)" value={form.digital_address} onChange={(e) => set("digital_address", e.target.value)} />
         <input style={inputStyle} placeholder="Plot Size (e.g. 0.5 acre, 100x100 ft)" value={form.plot_size} onChange={(e) => set("plot_size", e.target.value)} />
         <input style={inputStyle} placeholder="Bedrooms" type="number" value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} />
         <input style={inputStyle} placeholder="Bathrooms" type="number" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} />
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: T.gray1, marginBottom: 6 }}>
-          Exact Location
-        </label>
+      <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 20, marginTop: 20, marginBottom: 20 }}>
+        <h4 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 800, color: T.navy }}>📍 Property Location</h4>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+          <select style={{ ...inputStyle, margin: 0 }} value={form.region} onChange={(e) => set("region", e.target.value)}>
+            <option value="">Select Region</option>
+            {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <input style={{ ...inputStyle, margin: 0 }} placeholder="City / Municipality" value={form.city} onChange={(e) => set("city", e.target.value)} />
+          <input style={{ ...inputStyle, margin: 0 }} placeholder="Area / Town (e.g. East Legon)" value={form.area} onChange={(e) => set("area", e.target.value)} />
+          <input style={{ ...inputStyle, margin: 0 }} placeholder="Street Address (Optional)" value={form.address} onChange={(e) => set("address", e.target.value)} />
+          <input
+            style={{ ...inputStyle, margin: 0, gridColumn: "1 / -1" }}
+            placeholder="GhanaPost GPS Address (Recommended, e.g. AK-039-5028)"
+            value={form.digital_address}
+            onChange={(e) => set("digital_address", e.target.value)}
+          />
+        </div>
+
+        <h5 style={{ margin: "0 0 12px", fontSize: 13.5, fontWeight: 800, color: T.navy }}>📍 Find Property on Map</h5>
         <LocationPicker
           latitude={form.latitude || getCoords(form.city, form.region)[0]}
           longitude={form.longitude || getCoords(form.city, form.region)[1]}
           onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+          onAddressFound={(parts) =>
+            setForm((f) => ({
+              ...f,
+              city: parts.city || f.city,
+              area: parts.area || f.area,
+              address: parts.address || f.address,
+            }))
+          }
         />
 
-        <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: T.gray1, margin: "16px 0 8px" }}>
+        <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: T.gray1, margin: "20px 0 8px" }}>
           Location Visibility
         </label>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
+            { value: "approximate", label: "Show approximate location to buyers (Recommended)" },
             { value: "exact", label: "Show exact property location" },
-            { value: "approximate", label: "Show approximate area only (recommended)" },
-            { value: "hidden_until_viewing", label: "Hide exact location until a viewing is confirmed" },
+            { value: "hidden_until_viewing", label: "Hide location until a viewing is confirmed" },
           ].map((opt) => (
             <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.gray1, cursor: "pointer" }}>
               <input

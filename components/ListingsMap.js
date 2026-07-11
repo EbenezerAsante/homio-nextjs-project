@@ -65,7 +65,7 @@ export default function ListingsMap({ listings }) {
           <a href="/property/${p.id}" style="text-decoration:none;color:inherit;display:block;min-width:170px;">
             <div style="font-weight:800;color:${T.navy};font-size:13.5px;">${fmt(p.price, p.listing_type)}</div>
             <div style="font-size:12.5px;color:${T.gray1};margin:2px 0;">${p.title}</div>
-            <div style="font-size:11.5px;color:${T.gray2};">${p.city}, ${p.region}</div>
+            <div style="font-size:11.5px;color:${T.gray2};">${p.area ? `${p.area}, ` : ""}${p.city}, ${p.region}</div>
           </a>
         `;
 

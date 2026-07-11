@@ -167,7 +167,7 @@ export default function PropertyCard({ p }) {
           </div>
           <div style={{ fontSize: 12, color: T.gray2, marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
             <MapPin size={12} strokeWidth={2.2} style={{ flexShrink: 0 }} />
-            {p.city}, {p.region}
+            {p.area ? `${p.area}, ` : ""}{p.city}, {p.region}
           </div>
           {p.ownerType?.verified && (
             <div style={{ fontSize: 11, color: T.green, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
