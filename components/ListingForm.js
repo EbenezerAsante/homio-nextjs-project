@@ -24,6 +24,9 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
     region: existing?.region || "",
     city: existing?.city || "",
     address: existing?.address || "",
+    area: existing?.area || "",
+    digital_address: existing?.digital_address || "",
+    location_visibility: existing?.location_visibility || "approximate",
     plot_size: existing?.plot_size || "",
     bedrooms: existing?.bedrooms || "",
     bathrooms: existing?.bathrooms || "",
@@ -101,6 +104,8 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
         </select>
         <input style={inputStyle} placeholder="City / Town" value={form.city} onChange={(e) => set("city", e.target.value)} />
         <input style={inputStyle} placeholder="Address" value={form.address} onChange={(e) => set("address", e.target.value)} />
+        <input style={inputStyle} placeholder="Area / Neighbourhood (e.g. East Legon)" value={form.area} onChange={(e) => set("area", e.target.value)} />
+        <input style={inputStyle} placeholder="Digital Address (e.g. AK-039-5028)" value={form.digital_address} onChange={(e) => set("digital_address", e.target.value)} />
         <input style={inputStyle} placeholder="Plot Size (e.g. 0.5 acre, 100x100 ft)" value={form.plot_size} onChange={(e) => set("plot_size", e.target.value)} />
         <input style={inputStyle} placeholder="Bedrooms" type="number" value={form.bedrooms} onChange={(e) => set("bedrooms", e.target.value)} />
         <input style={inputStyle} placeholder="Bathrooms" type="number" value={form.bathrooms} onChange={(e) => set("bathrooms", e.target.value)} />
@@ -115,6 +120,27 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
           longitude={form.longitude || getCoords(form.city, form.region)[1]}
           onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
         />
+
+        <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: T.gray1, margin: "16px 0 8px" }}>
+          Location Visibility
+        </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { value: "exact", label: "Show exact property location" },
+            { value: "approximate", label: "Show approximate area only (recommended)" },
+            { value: "hidden_until_viewing", label: "Hide exact location until a viewing is confirmed" },
+          ].map((opt) => (
+            <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.gray1, cursor: "pointer" }}>
+              <input
+                type="radio"
+                name="location_visibility"
+                checked={form.location_visibility === opt.value}
+                onChange={() => set("location_visibility", opt.value)}
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
       </div>
 
       {error && <div style={{ color: T.red, fontSize: 13, marginBottom: 12 }}>{error}</div>}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { T, fmt, getCoords } from "../lib/constants";
+import { applyPrivacyOffset } from "../lib/location-utils";
 
 export default function ListingsMap({ listings }) {
   const mapRef = useRef(null);
@@ -53,6 +54,10 @@ export default function ListingsMap({ listings }) {
           const jitter = ((seed % 100) / 100 - 0.5) * 0.06; // ~ within a few km
           lat = fallback[0] + jitter;
           lng = fallback[1] + jitter * 1.3;
+        } else if ((p.location_visibility || "approximate") !== "exact") {
+          // Never expose a listing's real pin on the public browse map
+          // unless the owner explicitly chose "exact".
+          [lat, lng] = applyPrivacyOffset(lat, lng, p.id);
         }
         points.push([lat, lng]);
 
