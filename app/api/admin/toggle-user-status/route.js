@@ -59,14 +59,18 @@ export async function POST(request) {
   // We only ever touch listings whose current status we can cleanly reverse —
   // an already-pending or already-rejected listing is untouched either way.
   if (action === "suspend") {
-    const { data: toHide } = await adminClient
+    const { data: toHide, error: toHideError } = await adminClient
       .from("listings")
       .select("id, status")
       .eq("agent_id", userId)
       .eq("status", "active");
 
+    if (toHideError) {
+      console.error("toggle-user-status: failed to fetch listings to hide:", toHideError.message);
+    }
+
     if (toHide && toHide.length > 0) {
-      await Promise.all(
+      const results = await Promise.all(
         toHide.map((l) =>
           adminClient
             .from("listings")
@@ -74,16 +78,23 @@ export async function POST(request) {
             .eq("id", l.id)
         )
       );
+      results.forEach((r, i) => {
+        if (r.error) console.error(`toggle-user-status: failed to hide listing ${toHide[i].id}:`, r.error.message);
+      });
     }
   } else {
-    const { data: toRestore } = await adminClient
+    const { data: toRestore, error: toRestoreError } = await adminClient
       .from("listings")
       .select("id, previous_status")
       .eq("agent_id", userId)
       .eq("status", "suspended");
 
+    if (toRestoreError) {
+      console.error("toggle-user-status: failed to fetch listings to restore:", toRestoreError.message);
+    }
+
     if (toRestore && toRestore.length > 0) {
-      await Promise.all(
+      const results = await Promise.all(
         toRestore.map((l) =>
           adminClient
             .from("listings")
@@ -91,6 +102,9 @@ export async function POST(request) {
             .eq("id", l.id)
         )
       );
+      results.forEach((r, i) => {
+        if (r.error) console.error(`toggle-user-status: failed to restore listing ${toRestore[i].id}:`, r.error.message);
+      });
     }
   }
 
