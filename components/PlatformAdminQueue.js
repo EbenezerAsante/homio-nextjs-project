@@ -5,6 +5,7 @@ import Link from "next/link";
 import { T } from "@/lib/constants";
 import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
 import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink } from "lucide-react";
+import UserManagementTab from "./UserManagementTab";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -310,6 +311,18 @@ export default function PlatformAdminQueue({ adminName }) {
             <LayoutDashboard size={15} /> Overview
           </button>
           <button
+            onClick={() => setActiveView("users")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
+              color: activeView === "users" ? T.navy : T.gray2,
+              borderBottom: activeView === "users" ? `2px solid ${T.navy}` : "2px solid transparent",
+            }}
+          >
+            <Users size={15} /> Users
+          </button>
+          <button
             onClick={() => setActiveView("listings")}
             style={{
               display: "flex", alignItems: "center", gap: 6,
@@ -402,6 +415,8 @@ export default function PlatformAdminQueue({ adminName }) {
               )}
             </>
           )
+        ) : activeView === "users" ? (
+          <UserManagementTab />
         ) : activeView === "listings" ? (
           listingsLoading ? (
             <div style={{ color: T.gray2, padding: 40, textAlign: "center" }}>Loading pending listings…</div>
