@@ -55,5 +55,44 @@ export async function POST(request) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
+  // Listings follow the account: hide them on suspension, restore on reactivation.
+  // We only ever touch listings whose current status we can cleanly reverse —
+  // an already-pending or already-rejected listing is untouched either way.
+  if (action === "suspend") {
+    const { data: toHide } = await adminClient
+      .from("listings")
+      .select("id, status")
+      .eq("agent_id", userId)
+      .eq("status", "active");
+
+    if (toHide && toHide.length > 0) {
+      await Promise.all(
+        toHide.map((l) =>
+          adminClient
+            .from("listings")
+            .update({ status: "suspended", previous_status: l.status })
+            .eq("id", l.id)
+        )
+      );
+    }
+  } else {
+    const { data: toRestore } = await adminClient
+      .from("listings")
+      .select("id, previous_status")
+      .eq("agent_id", userId)
+      .eq("status", "suspended");
+
+    if (toRestore && toRestore.length > 0) {
+      await Promise.all(
+        toRestore.map((l) =>
+          adminClient
+            .from("listings")
+            .update({ status: l.previous_status || "active", previous_status: null })
+            .eq("id", l.id)
+        )
+      );
+    }
+  }
+
   return NextResponse.json({ success: true });
 }

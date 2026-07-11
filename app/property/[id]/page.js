@@ -21,24 +21,43 @@ export default async function PropertyDetail({ params }) {
 
   if (!p) return notFound();
 
-  // Non-active listings (pending review / rejected) are hidden from the public,
-  // but the agent who owns the listing, or a platform admin, can preview it.
-  if (p.status !== "active") {
-    const { data: authData } = await supabase.auth.getUser();
-    const currentUserId = authData?.user?.id;
-    const isOwner = currentUserId === p.agent_id;
+  // Figure out who's looking at this listing, once, up front — reused for
+  // the pending/rejected/suspended visibility gate AND the location privacy bypass.
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  const currentUserId = currentUser?.id;
+  const isOwner = currentUserId === p.agent_id;
 
-    let isAdmin = false;
-    if (currentUserId && !isOwner) {
-      const { data: profileRow } = await supabase
-        .from("profiles")
-        .select("is_platform_admin")
-        .eq("id", currentUserId)
-        .maybeSingle();
-      isAdmin = !!profileRow?.is_platform_admin;
+  let isAdmin = false;
+  if (currentUserId && !isOwner) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("is_platform_admin")
+      .eq("id", currentUserId)
+      .maybeSingle();
+    isAdmin = !!profileRow?.is_platform_admin;
+  }
+
+  // Non-active listings (pending review / rejected / suspended) are hidden
+  // from the public, but the agent who owns the listing, or a platform
+  // admin, can preview them. Suspended listings get a friendlier
+  // "unavailable" message instead of a blank 404.
+  if (p.status !== "active" && !isOwner && !isAdmin) {
+    if (p.status === "suspended") {
+      return (
+        <div style={{ background: T.bg, minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: "48px 32px", maxWidth: 440, textAlign: "center", border: `1px solid ${T.border}` }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🏠</div>
+            <h1 style={{ color: T.navy, fontSize: 20, fontWeight: 800, margin: "0 0 10px" }}>
+              This listing is currently unavailable
+            </h1>
+            <p style={{ color: T.gray2, fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+              It may have been temporarily hidden or removed by the owner or Homio.
+            </p>
+          </div>
+        </div>
+      );
     }
-
-    if (!isOwner && !isAdmin) return notFound();
+    return notFound();
   }
 
   // increment view count (best-effort, ignore errors)
@@ -50,14 +69,13 @@ export default async function PropertyDetail({ params }) {
 
   // Does the current viewer have a confirmed viewing for this listing?
   // Only matters when location_visibility is "hidden_until_viewing".
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
   let hasConfirmedViewing = false;
-  if (currentUser) {
+  if (currentUserId) {
     const { data: confirmedAppt } = await supabase
       .from("appointments")
       .select("id")
       .eq("listing_id", p.id)
-      .eq("buyer_id", currentUser.id)
+      .eq("buyer_id", currentUserId)
       .eq("status", "confirmed")
       .maybeSingle();
     hasConfirmedViewing = !!confirmedAppt;
@@ -66,12 +84,18 @@ export default async function PropertyDetail({ params }) {
   const fallbackCoords = getCoords(p.city, p.region);
   const displayCoords = getDisplayCoords(
     { ...p, latitude: p.latitude ?? fallbackCoords[0], longitude: p.longitude ?? fallbackCoords[1] },
-    hasConfirmedViewing
+    hasConfirmedViewing,
+    isOwner || isAdmin // owner/admin always see the exact pin, regardless of privacy setting
   );
 
   return (
     <div style={{ background: T.bg, minHeight: "90vh" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 24px" }}>
+        {isAdmin && p.status !== "active" && (
+          <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontSize: 13, color: "#92400E", fontWeight: 600 }}>
+            🛠 Admin preview — this listing is "{p.status}" and not yet visible to the public. The map below shows the exact location for review purposes.
+          </div>
+        )}
         <div className="homio-detail-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 620px", minWidth: 0 }}>
             <div style={{ marginBottom: 20 }}>
