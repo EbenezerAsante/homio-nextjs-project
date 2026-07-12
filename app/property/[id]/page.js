@@ -7,6 +7,7 @@ import AppointmentBooking from "../../../components/AppointmentBooking";
 import CollapsibleLocationSection from "../../../components/CollapsibleLocationSection";
 import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
+import StickyContactBar from "../../../components/StickyContactBar";
 
 export const revalidate = 30;
 
@@ -89,7 +90,7 @@ export default async function PropertyDetail({ params }) {
   );
 
   return (
-    <div style={{ background: T.bg, minHeight: "90vh" }}>
+    <div className="homio-property-page" style={{ background: T.bg, minHeight: "90vh" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "28px 24px" }}>
         {isAdmin && p.status !== "active" && (
           <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "10px 16px", marginBottom: 16, fontSize: 13, color: "#92400E", fontWeight: 600 }}>
@@ -166,7 +167,7 @@ export default async function PropertyDetail({ params }) {
           </div>
 
           <div className="homio-detail-sidebar" style={{ width: 320, flexShrink: 0 }}>
-            <div style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+            <div id="enquiry-section" style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
               <div style={{ fontWeight: 800, color: T.navy, marginBottom: 4, fontSize: 15 }}>
                 {p.agents?.company || "Homio Agent"}
               </div>
@@ -180,12 +181,14 @@ export default async function PropertyDetail({ params }) {
               <EnquiryForm listingId={p.id} agentId={p.agent_id} />
             </div>
 
-            <div style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow, marginTop: 16 }}>
+            <div id="viewing-section" style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow, marginTop: 16 }}>
               <AppointmentBooking listingId={p.id} agentId={p.agent_id} />
             </div>
           </div>
         </div>
       </div>
+
+      <StickyContactBar phone={p.agents?.phone} isOwnListing={isOwner} />
     </div>
   );
 }
