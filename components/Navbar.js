@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
+import { fetchUnreadCount } from "../lib/messaging-queries";
 import { T } from "../lib/constants";
-import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail } from "lucide-react";
+import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail, Home, PlusCircle, User } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -19,7 +20,14 @@ export default function Navbar() {
   const profileRef = useRef(null);
   const moreRef = useRef(null);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Property pages already have their own sticky Call/WhatsApp/Message/Book
+  // bar — showing the generic bottom tab nav there too would be redundant
+  // and eat too much screen space.
+  const hideBottomNav = pathname?.startsWith("/property/");
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -42,6 +50,11 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [moreOpen]);
+
+  useEffect(() => {
+    document.body.classList.toggle("homio-has-bottom-nav", !hideBottomNav);
+    return () => document.body.classList.remove("homio-has-bottom-nav");
+  }, [hideBottomNav]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -67,6 +80,7 @@ export default function Navbar() {
           .maybeSingle();
         setIsPlatformAdmin(!!profileRow?.is_platform_admin);
         setFullName(profileRow?.full_name || "");
+        fetchUnreadCount(currentUser.id).then(setUnreadCount);
       }
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -86,10 +100,12 @@ export default function Navbar() {
           .maybeSingle();
         setIsPlatformAdmin(!!profileRow?.is_platform_admin);
         setFullName(profileRow?.full_name || "");
+        fetchUnreadCount(currentUser.id).then(setUnreadCount);
       } else {
         setIsAgent(false);
         setIsPlatformAdmin(false);
         setFullName("");
+        setUnreadCount(0);
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -102,6 +118,7 @@ export default function Navbar() {
   };
 
   return (
+    <>
     <header
       style={{
         position: "sticky",
@@ -394,11 +411,98 @@ export default function Navbar() {
             display: none !important;
           }
           .homio-hamburger {
-            display: block !important;
+            display: none !important;
           }
+        }
+        .homio-bottom-nav {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .homio-bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 500;
+            background: #fff;
+            border-top: 1px solid #E5E7EB;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+            padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+          }
+          body.homio-has-bottom-nav {
+            padding-bottom: 62px;
+          }
+        }
+        .homio-bottom-tab {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          padding: 6px 2px;
+          min-height: 48px;
+          color: ${T.gray2};
+          font-size: 10.5px;
+          font-weight: 600;
+        }
+        .homio-bottom-tab.active {
+          color: ${T.navy};
+        }
+        .homio-bottom-badge {
+          position: absolute;
+          top: 3px;
+          right: calc(50% - 14px);
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: ${T.gold};
+          border: 1.5px solid #fff;
         }
       `}</style>
     </header>
+
+    {/* Mobile bottom tab bar — Home / Search / Post / Messages / Account */}
+    {!hideBottomNav && (
+      <nav className="homio-bottom-nav">
+        <Link href="/" className={`homio-bottom-tab${pathname === "/" ? " active" : ""}`}>
+          <Home size={20} />
+          <span>Home</span>
+        </Link>
+        <Link href="/listings" className={`homio-bottom-tab${pathname?.startsWith("/listings") ? " active" : ""}`}>
+          <Search size={20} />
+          <span>Search</span>
+        </Link>
+        <Link
+          href={!user ? "/login" : isAgent ? "/admin" : "/dashboard/roles"}
+          className={`homio-bottom-tab${pathname === "/admin" || pathname?.startsWith("/dashboard/roles") || pathname?.startsWith("/dashboard/apply") ? " active" : ""}`}
+        >
+          <PlusCircle size={20} />
+          <span>Post</span>
+        </Link>
+        <Link
+          href={!user ? "/login" : "/dashboard/messages"}
+          className={`homio-bottom-tab${pathname?.startsWith("/dashboard/messages") ? " active" : ""}`}
+          style={{ position: "relative" }}
+        >
+          <Mail size={20} />
+          {unreadCount > 0 && <span className="homio-bottom-badge" />}
+          <span>Messages</span>
+        </Link>
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className={`homio-bottom-tab${menuOpen || pathname === "/dashboard" || pathname?.startsWith("/dashboard/appointments") || pathname?.startsWith("/dashboard/owner") || pathname?.startsWith("/platform-admin") || pathname?.startsWith("/saved") ? " active" : ""}`}
+        >
+          <User size={20} />
+          <span>Account</span>
+        </button>
+      </nav>
+    )}
+    </>
   );
 }
 
