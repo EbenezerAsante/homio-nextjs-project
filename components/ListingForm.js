@@ -89,7 +89,7 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
       <input style={inputStyle} placeholder="Title" value={form.title} onChange={(e) => set("title", e.target.value)} />
       <textarea style={{ ...inputStyle, minHeight: 80 }} placeholder="Description" value={form.description} onChange={(e) => set("description", e.target.value)} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="homio-admin-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <select style={inputStyle} value={form.listing_type} onChange={(e) => set("listing_type", e.target.value)}>
           <option value="sale">For Sale</option>
           <option value="rent">For Rent</option>
@@ -106,7 +106,7 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
       <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, padding: 20, marginTop: 20, marginBottom: 20 }}>
         <h4 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 800, color: T.navy }}>📍 Property Location</h4>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+        <div className="homio-admin-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
           <select style={{ ...inputStyle, margin: 0 }} value={form.region} onChange={(e) => set("region", e.target.value)}>
             <option value="">Select Region</option>
             {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}

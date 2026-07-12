@@ -48,7 +48,7 @@ export default function BuyerMessagesPage() {
             <div>No conversations yet. Enquire about a property to start one.</div>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
+          <div className="homio-admin-grid" style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {conversations.map((c) => (
                 <button

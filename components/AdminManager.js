@@ -213,7 +213,7 @@ export default function AdminManager({ userId, initialListings }) {
               </div>
               <FLabel>Price (GH₵) *</FLabel>
               <input value={form.price} onChange={(e) => set("price", e.target.value)} type="number" style={inputStyle} placeholder="e.g. 3500" />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+              <div className="homio-4col-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                 {[["Beds", "bedrooms"], ["Baths", "bathrooms"], ["Sqft", "sqft"], ["Garage", "garage"]].map(([l, k]) => (
                   <div key={k}>
                     <FLabel>{l}</FLabel>

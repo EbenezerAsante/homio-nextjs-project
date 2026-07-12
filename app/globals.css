@@ -71,6 +71,9 @@ img {
   .homio-key-details {
     grid-template-columns: 1fr !important;
   }
+  .homio-4col-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
 }
 
 /* ── Sticky contact bar (property detail page, mobile only) ── */

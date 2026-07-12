@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase-client";
 import { activateOwnerRole, submitRoleApplication } from "@/lib/profile-queries";
 import { T } from "@/lib/constants";
 import { CheckCircle2, Clock } from "lucide-react";
+import VerificationDocUploader from "@/components/VerificationDocUploader";
 
 const CONFIGS = {
   owner: {
@@ -60,6 +61,7 @@ export default function ApplyPage() {
 
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({});
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
@@ -109,6 +111,8 @@ export default function ApplyPage() {
           payload[f.key] = form[f.key] || null;
         }
       }
+      payload.documents = documents;
+
       await submitRoleApplication(role, user.id, payload);
       setLoading(false);
       setDone(true);
@@ -185,6 +189,12 @@ export default function ApplyPage() {
               )}
             </div>
           ))}
+
+        {!config.instant && user && (
+          <div style={{ marginBottom: 14 }}>
+            <VerificationDocUploader userId={user.id} documents={documents} onChange={setDocuments} />
+          </div>
+        )}
 
         {error && <div style={{ color: T.red, fontSize: 13, marginBottom: 14 }}>{error}</div>}
 

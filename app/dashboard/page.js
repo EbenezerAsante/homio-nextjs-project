@@ -133,7 +133,7 @@ export default function DashboardPage() {
           <StatCard icon={MessageCircle} label="Unread Messages" value={stats.unreadMessages} href="/dashboard/messages" />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 24 }}>
+        <div className="homio-admin-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 24 }}>
           {/* Recent activity */}
           <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 24, boxShadow: T.shadow }}>
             <h2 style={{ fontSize: 15, fontWeight: 800, color: T.navy, margin: "0 0 16px" }}>Recent Activity</h2>

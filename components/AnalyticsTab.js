@@ -30,7 +30,7 @@ export default function AnalyticsTab({ analytics, listings }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      <div className="homio-admin-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
         <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 10, padding: 20 }}>
           <h3 style={{ fontSize: 15, marginBottom: 14 }}>By Property Type</h3>
           {Object.entries(byType).length === 0 ? (
