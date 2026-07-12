@@ -11,6 +11,45 @@ import StickyContactBar from "../../../components/StickyContactBar";
 
 export const revalidate = 30;
 
+export async function generateMetadata({ params }) {
+  const supabase = createClient();
+  const { data: p } = await supabase
+    .from("listings")
+    .select("title, description, price, listing_type, city, region, status, listing_images(url, sort_order)")
+    .eq("id", params.id)
+    .single();
+
+  if (!p || p.status !== "active") {
+    return { title: "Property Listing" };
+  }
+
+  const priceLabel = fmt(p.price, p.listing_type);
+  const title = `${p.title} — ${priceLabel}`;
+  const description = p.description
+    ? p.description.slice(0, 155)
+    : `${p.listing_type === "rent" ? "For rent" : "For sale"} in ${p.city}, ${p.region} — ${priceLabel} on Homio Ghana.`;
+
+  const cover = p.listing_images?.length
+    ? [...p.listing_images].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0]?.url
+    : null;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: cover ? [{ url: cover, width: 1200, height: 630, alt: p.title }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: cover ? [cover] : undefined,
+    },
+  };
+}
+
 export default async function PropertyDetail({ params }) {
   const supabase = createClient();
 
