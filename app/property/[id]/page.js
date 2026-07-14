@@ -8,6 +8,7 @@ import CollapsibleLocationSection from "../../../components/CollapsibleLocationS
 import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
 import StickyContactBar from "../../../components/StickyContactBar";
+import ReportListingButton from "../../../components/ReportListingButton";
 
 export const revalidate = 30;
 
@@ -222,6 +223,10 @@ export default async function PropertyDetail({ params }) {
 
             <div id="viewing-section" style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow, marginTop: 16 }}>
               <AppointmentBooking listingId={p.id} agentId={p.agent_id} />
+            </div>
+
+            <div style={{ marginTop: 12, textAlign: "center" }}>
+              <ReportListingButton listingId={p.id} />
             </div>
           </div>
         </div>

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages } from "@/lib/platform-admin-queries";
-import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink } from "lucide-react";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
+import { createClient } from "@/lib/supabase-client";
+import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag } from "lucide-react";
 import UserManagementTab from "./UserManagementTab";
 
 const ROLE_META = {
@@ -105,6 +106,53 @@ function StatusBadge({ status }) {
   );
 }
 
+function DocumentsList({ documents }) {
+  const supabase = createClient();
+  const [openingPath, setOpeningPath] = useState(null);
+
+  const openDoc = async (doc) => {
+    setOpeningPath(doc.path);
+    const { data, error } = await supabase.storage
+      .from("verification-documents")
+      .createSignedUrl(doc.path, 60); // link valid for 60 seconds
+
+    setOpeningPath(null);
+
+    if (error || !data?.signedUrl) {
+      alert("Couldn't open this document. Try again.");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  if (!documents || documents.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ color: T.gray2, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+        Documents
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {documents.map((doc) => (
+          <button
+            key={doc.path}
+            onClick={() => openDoc(doc)}
+            disabled={openingPath === doc.path}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, textAlign: "left",
+              background: T.bg, border: "none", borderRadius: 6, padding: "7px 10px",
+              fontSize: 12.5, color: T.navy, cursor: openingPath === doc.path ? "default" : "pointer",
+            }}
+          >
+            {openingPath === doc.path ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
   const relevantFields = Object.keys(FIELD_LABELS).filter((k) => app[k] !== undefined && app[k] !== null && app[k] !== "");
 
@@ -130,6 +178,8 @@ function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
           ))}
         </div>
       )}
+
+      <DocumentsList documents={app.documents} />
 
       <div style={{ fontSize: 12, color: T.gray2, marginBottom: 14 }}>
         Submitted {new Date(app.submitted_at).toLocaleDateString()}
@@ -168,6 +218,75 @@ function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
   );
 }
 
+function ReportCard({ report, onDismiss, onMarkReviewed, busy }) {
+  const listing = report.listings;
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, boxShadow: T.shadow }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Flag size={15} color={T.red} />
+          <span style={{ fontWeight: 800, fontSize: 14, color: T.navy }}>{report.reason}</span>
+        </div>
+        <span style={{ fontSize: 11.5, color: T.gray2, whiteSpace: "nowrap" }}>
+          {new Date(report.created_at).toLocaleDateString()}
+        </span>
+      </div>
+
+      {report.details && (
+        <p style={{ fontSize: 13, color: T.gray1, lineHeight: 1.6, margin: "0 0 12px", background: T.bg, borderRadius: 8, padding: "10px 12px" }}>
+          {report.details}
+        </p>
+      )}
+
+      {listing ? (
+        <div style={{ fontSize: 13, color: T.gray1, marginBottom: 14, paddingTop: 10, borderTop: `1px solid ${T.border}` }}>
+          <div style={{ fontWeight: 700 }}>
+            {listing.currency || "GHS"} {Number(listing.price).toLocaleString()} — {listing.title}
+          </div>
+          <div style={{ color: T.gray2, fontSize: 12 }}>{listing.city}, {listing.region}</div>
+          <Link
+            href={`/property/${listing.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: T.navy, marginTop: 6 }}
+          >
+            View Listing <ExternalLink size={12} />
+          </Link>
+        </div>
+      ) : (
+        <p style={{ fontSize: 12.5, color: T.gray3, marginBottom: 14, fontStyle: "italic" }}>
+          The reported listing no longer exists.
+        </p>
+      )}
+
+      {report.status === "pending" && (
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            onClick={() => onMarkReviewed(report.id)}
+            disabled={busy}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: T.navy, color: "#fff", border: "none", borderRadius: 8, padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+          >
+            <CheckCircle2 size={15} /> Mark Reviewed
+          </button>
+          <button
+            onClick={() => onDismiss(report.id)}
+            disabled={busy}
+            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "#fff", color: T.gray2, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+          >
+            <XCircle size={15} /> Dismiss
+          </button>
+        </div>
+      )}
+
+      {report.status !== "pending" && (
+        <span style={{ fontSize: 11, fontWeight: 700, color: report.status === "reviewed" ? T.green : T.gray3, textTransform: "capitalize" }}>
+          {report.status}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function PlatformAdminQueue({ adminName }) {
   const [activeView, setActiveView] = useState("overview"); // overview | applications | contact
   const [activeRole, setActiveRole] = useState("agent");
@@ -183,6 +302,10 @@ export default function PlatformAdminQueue({ adminName }) {
   const [pendingListings, setPendingListings] = useState([]);
   const [listingsLoading, setListingsLoading] = useState(true);
   const [listingBusyId, setListingBusyId] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [reportBusyId, setReportBusyId] = useState(null);
+  const [reportFilter, setReportFilter] = useState("pending");
 
   useEffect(() => {
     setStatsLoading(true);
@@ -251,6 +374,40 @@ export default function PlatformAdminQueue({ adminName }) {
     setListingBusyId(null);
   };
 
+  useEffect(() => {
+    if (activeView !== "reports") return;
+    loadReports();
+  }, [activeView, reportFilter]);
+
+  const loadReports = async () => {
+    setReportsLoading(true);
+    const data = await fetchReports(reportFilter);
+    setReports(data);
+    setReportsLoading(false);
+  };
+
+  const handleDismissReport = async (id) => {
+    setReportBusyId(id);
+    try {
+      await updateReportStatus(id, "dismissed");
+      await loadReports();
+    } catch (e) {
+      alert(e.message || "Failed to update report");
+    }
+    setReportBusyId(null);
+  };
+
+  const handleMarkReviewedReport = async (id) => {
+    setReportBusyId(id);
+    try {
+      await updateReportStatus(id, "reviewed");
+      await loadReports();
+    } catch (e) {
+      alert(e.message || "Failed to update report");
+    }
+    setReportBusyId(null);
+  };
+
   const handleApprove = async (role, userId) => {
     setBusyId(userId);
     try {
@@ -297,7 +454,7 @@ export default function PlatformAdminQueue({ adminName }) {
         </h1>
 
         {/* Top-level view switcher */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}`, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <button
             onClick={() => setActiveView("overview")}
             style={{
@@ -306,6 +463,7 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "overview" ? T.navy : T.gray2,
               borderBottom: activeView === "overview" ? `2px solid ${T.navy}` : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <LayoutDashboard size={15} /> Overview
@@ -318,6 +476,7 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "users" ? T.navy : T.gray2,
               borderBottom: activeView === "users" ? `2px solid ${T.navy}` : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Users size={15} /> Users
@@ -330,6 +489,7 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "listings" ? T.navy : T.gray2,
               borderBottom: activeView === "listings" ? `2px solid ${T.navy}` : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Home size={15} /> Listings
@@ -347,6 +507,7 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "applications" ? T.navy : T.gray2,
               borderBottom: activeView === "applications" ? `2px solid ${T.navy}` : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <ClipboardList size={15} /> Applications
@@ -359,12 +520,31 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", fontSize: 14, fontWeight: 700,
               color: activeView === "contact" ? T.navy : T.gray2,
               borderBottom: activeView === "contact" ? `2px solid ${T.navy}` : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Mail size={15} /> Contact Messages
             {contactMessages.length > 0 && (
               <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
                 {contactMessages.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveView("reports")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", marginLeft: 20, fontSize: 14, fontWeight: 700,
+              color: activeView === "reports" ? T.navy : T.gray2,
+              borderBottom: activeView === "reports" ? `2px solid ${T.navy}` : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            <Flag size={15} /> Reports
+            {stats?.pendingReports > 0 && (
+              <span style={{ background: T.red, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
+                {stats.pendingReports}
               </span>
             )}
           </button>
@@ -386,6 +566,7 @@ export default function PlatformAdminQueue({ adminName }) {
                 <StatCard icon={Briefcase} label="Active Agents" value={stats.activeAgents} accent={T.navy} />
                 <StatCard icon={MessageSquare} label="Total Enquiries" value={stats.totalEnquiries} accent={T.gold} />
                 <StatCard icon={Clock} label="Pending Approvals" value={stats.totalPending} accent={T.red} />
+                <StatCard icon={Flag} label="Pending Reports" value={stats.pendingReports} accent={T.red} />
               </div>
 
               {stats.totalPending > 0 && (
@@ -464,6 +645,47 @@ export default function PlatformAdminQueue({ adminName }) {
               ))}
             </div>
           )
+        ) : activeView === "reports" ? (
+          <>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+              {["pending", "reviewed", "dismissed", "all"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setReportFilter(f)}
+                  style={{
+                    border: "none", background: "none",
+                    color: reportFilter === f ? T.navy : T.gray2,
+                    fontWeight: 700, fontSize: 13, cursor: "pointer", padding: "4px 0", marginRight: 16,
+                    borderBottom: reportFilter === f ? `2px solid ${T.navy}` : "2px solid transparent",
+                    textTransform: "capitalize", whiteSpace: "nowrap", flexShrink: 0,
+                  }}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            {reportsLoading ? (
+              <div style={{ color: T.gray2, padding: 40, textAlign: "center" }}>Loading reports…</div>
+            ) : reports.length === 0 ? (
+              <div style={{ background: "#fff", border: `1px dashed ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: T.gray2 }}>
+                <Flag size={28} color={T.gray2} style={{ marginBottom: 10 }} />
+                <div>No {reportFilter !== "all" ? reportFilter : ""} reports.</div>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 16 }}>
+                {reports.map((report) => (
+                  <ReportCard
+                    key={report.id}
+                    report={report}
+                    onDismiss={handleDismissReport}
+                    onMarkReviewed={handleMarkReviewedReport}
+                    busy={reportBusyId === report.id}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
         <>
         {/* Role tabs */}
