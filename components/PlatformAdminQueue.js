@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { T } from "@/lib/constants";
 import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
-import { startOrGetReportThread } from "@/lib/messaging-queries";
+import { startOrGetReportThread, fetchReportUnreadFlags } from "@/lib/messaging-queries";
 import { createClient } from "@/lib/supabase-client";
 import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag, X } from "lucide-react";
 import UserManagementTab from "./UserManagementTab";
@@ -220,7 +220,7 @@ function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
   );
 }
 
-function ReportCard({ report, onDismiss, onMarkReviewed, onMessage, busy }) {
+function ReportCard({ report, onDismiss, onMarkReviewed, onMessage, hasUnread, busy }) {
   const listing = report.listings;
   return (
     <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, boxShadow: T.shadow }}>
@@ -273,11 +273,20 @@ function ReportCard({ report, onDismiss, onMarkReviewed, onMessage, busy }) {
           onClick={() => onMessage(report)}
           style={{
             width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-            background: "#fff", color: T.navy, border: `1.5px solid ${T.navy}`, borderRadius: 8,
-            padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", marginBottom: 10,
+            background: "#fff", color: T.navy, border: `1.5px solid ${hasUnread ? T.red : T.navy}`, borderRadius: 8,
+            padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", marginBottom: 10, position: "relative",
           }}
         >
           <MessageSquare size={15} /> Message Reporter
+          {hasUnread && (
+            <span style={{
+              position: "absolute", top: -7, right: -7, background: T.red, color: "#fff",
+              borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center",
+              justifyContent: "center", fontSize: 10, fontWeight: 700,
+            }}>
+              !
+            </span>
+          )}
         </button>
       )}
 
@@ -331,17 +340,24 @@ export default function PlatformAdminQueue({ adminName }) {
   const [adminId, setAdminId] = useState(null);
   const [activeThread, setActiveThread] = useState(null);
   const [threadLoading, setThreadLoading] = useState(false);
+  const [unreadFlags, setUnreadFlags] = useState({});
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setAdminId(data?.user?.id || null));
   }, []);
 
+  const loadUnreadFlags = async (reportList) => {
+    const flags = await fetchReportUnreadFlags(reportList.map((r) => r.id));
+    setUnreadFlags(flags);
+  };
+
   const handleMessageReporter = async (report) => {
     setThreadLoading(true);
     try {
       const thread = await startOrGetReportThread(report);
       setActiveThread(thread);
+      setUnreadFlags((prev) => ({ ...prev, [report.id]: false })); // clear badge immediately on open
     } catch (e) {
       alert(e.message || "Couldn't open conversation.");
     }
@@ -425,6 +441,7 @@ export default function PlatformAdminQueue({ adminName }) {
     const data = await fetchReports(reportFilter);
     setReports(data);
     setReportsLoading(false);
+    loadUnreadFlags(data);
   };
 
   const handleDismissReport = async (id) => {
@@ -716,6 +733,7 @@ export default function PlatformAdminQueue({ adminName }) {
                     onDismiss={handleDismissReport}
                     onMarkReviewed={handleMarkReviewedReport}
                     onMessage={handleMessageReporter}
+                    hasUnread={!!unreadFlags[report.id]}
                     busy={reportBusyId === report.id}
                   />
                 ))}
