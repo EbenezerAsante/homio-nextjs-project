@@ -19,6 +19,8 @@ export default function ReportListingButton({ listingId }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(REASONS[0]);
   const [details, setDetails] = useState("");
+  const [reporterName, setReporterName] = useState("");
+  const [reporterEmail, setReporterEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
@@ -34,6 +36,8 @@ export default function ReportListingButton({ listingId }) {
       reporter_id: authData?.user?.id || null,
       reason,
       details: details.trim() || null,
+      reporter_name: reporterName.trim() || null,
+      reporter_email: reporterEmail.trim() || null,
     });
 
     setSubmitting(false);
@@ -51,6 +55,8 @@ export default function ReportListingButton({ listingId }) {
       setDone(false);
       setReason(REASONS[0]);
       setDetails("");
+      setReporterName("");
+      setReporterEmail("");
       setError(null);
     }, 300);
   };
@@ -125,6 +131,25 @@ export default function ReportListingButton({ listingId }) {
                   rows={3}
                   style={{ width: "100%", border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, marginBottom: 14, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
                 />
+
+                <p style={{ fontSize: 12, color: T.gray3, margin: "0 0 8px" }}>
+                  Leave your contact info if you're open to us following up (optional).
+                </p>
+                <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                  <input
+                    value={reporterName}
+                    onChange={(e) => setReporterName(e.target.value)}
+                    placeholder="Your name"
+                    style={{ flex: 1, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, boxSizing: "border-box" }}
+                  />
+                  <input
+                    value={reporterEmail}
+                    onChange={(e) => setReporterEmail(e.target.value)}
+                    placeholder="Your email"
+                    type="email"
+                    style={{ flex: 1, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </div>
 
                 {error && <p style={{ color: T.red, fontSize: 13, marginBottom: 12 }}>{error}</p>}
 

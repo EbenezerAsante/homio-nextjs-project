@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { T } from "@/lib/constants";
 import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
+import { startOrGetReportThread } from "@/lib/messaging-queries";
 import { createClient } from "@/lib/supabase-client";
-import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag, X } from "lucide-react";
 import UserManagementTab from "./UserManagementTab";
+import MessageThread from "./MessageThread";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -218,7 +220,7 @@ function ApplicationCard({ app, role, onApprove, onReject, onRevoke, busy }) {
   );
 }
 
-function ReportCard({ report, onDismiss, onMarkReviewed, busy }) {
+function ReportCard({ report, onDismiss, onMarkReviewed, onMessage, busy }) {
   const listing = report.listings;
   return (
     <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, boxShadow: T.shadow }}>
@@ -236,6 +238,13 @@ function ReportCard({ report, onDismiss, onMarkReviewed, busy }) {
         <p style={{ fontSize: 13, color: T.gray1, lineHeight: 1.6, margin: "0 0 12px", background: T.bg, borderRadius: 8, padding: "10px 12px" }}>
           {report.details}
         </p>
+      )}
+
+      {(report.reporter_name || report.reporter_email || report.reporter_id) && (
+        <div style={{ fontSize: 12, color: T.gray2, marginBottom: 12 }}>
+          {report.reporter_name && <div>From: {report.reporter_name}</div>}
+          {report.reporter_email && <div>{report.reporter_email}</div>}
+        </div>
       )}
 
       {listing ? (
@@ -257,6 +266,19 @@ function ReportCard({ report, onDismiss, onMarkReviewed, busy }) {
         <p style={{ fontSize: 12.5, color: T.gray3, marginBottom: 14, fontStyle: "italic" }}>
           The reported listing no longer exists.
         </p>
+      )}
+
+      {report.reporter_id && (
+        <button
+          onClick={() => onMessage(report)}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            background: "#fff", color: T.navy, border: `1.5px solid ${T.navy}`, borderRadius: 8,
+            padding: "9px 0", fontWeight: 700, fontSize: 13, cursor: "pointer", marginBottom: 10,
+          }}
+        >
+          <MessageSquare size={15} /> Message Reporter
+        </button>
       )}
 
       {report.status === "pending" && (
@@ -306,6 +328,25 @@ export default function PlatformAdminQueue({ adminName }) {
   const [reportsLoading, setReportsLoading] = useState(true);
   const [reportBusyId, setReportBusyId] = useState(null);
   const [reportFilter, setReportFilter] = useState("pending");
+  const [adminId, setAdminId] = useState(null);
+  const [activeThread, setActiveThread] = useState(null);
+  const [threadLoading, setThreadLoading] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setAdminId(data?.user?.id || null));
+  }, []);
+
+  const handleMessageReporter = async (report) => {
+    setThreadLoading(true);
+    try {
+      const thread = await startOrGetReportThread(report);
+      setActiveThread(thread);
+    } catch (e) {
+      alert(e.message || "Couldn't open conversation.");
+    }
+    setThreadLoading(false);
+  };
 
   useEffect(() => {
     setStatsLoading(true);
@@ -454,7 +495,7 @@ export default function PlatformAdminQueue({ adminName }) {
         </h1>
 
         {/* Top-level view switcher */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}`, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}` }}>
           <button
             onClick={() => setActiveView("overview")}
             style={{
@@ -463,7 +504,6 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "overview" ? T.navy : T.gray2,
               borderBottom: activeView === "overview" ? `2px solid ${T.navy}` : "2px solid transparent",
-              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <LayoutDashboard size={15} /> Overview
@@ -476,7 +516,6 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "users" ? T.navy : T.gray2,
               borderBottom: activeView === "users" ? `2px solid ${T.navy}` : "2px solid transparent",
-              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Users size={15} /> Users
@@ -489,7 +528,6 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "listings" ? T.navy : T.gray2,
               borderBottom: activeView === "listings" ? `2px solid ${T.navy}` : "2px solid transparent",
-              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Home size={15} /> Listings
@@ -507,7 +545,6 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "applications" ? T.navy : T.gray2,
               borderBottom: activeView === "applications" ? `2px solid ${T.navy}` : "2px solid transparent",
-              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <ClipboardList size={15} /> Applications
@@ -520,7 +557,6 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", fontSize: 14, fontWeight: 700,
               color: activeView === "contact" ? T.navy : T.gray2,
               borderBottom: activeView === "contact" ? `2px solid ${T.navy}` : "2px solid transparent",
-              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Mail size={15} /> Contact Messages
@@ -538,7 +574,6 @@ export default function PlatformAdminQueue({ adminName }) {
               padding: "10px 4px", marginLeft: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "reports" ? T.navy : T.gray2,
               borderBottom: activeView === "reports" ? `2px solid ${T.navy}` : "2px solid transparent",
-              whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
             <Flag size={15} /> Reports
@@ -647,7 +682,7 @@ export default function PlatformAdminQueue({ adminName }) {
           )
         ) : activeView === "reports" ? (
           <>
-            <div style={{ display: "flex", gap: 8, marginBottom: 20, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
               {["pending", "reviewed", "dismissed", "all"].map((f) => (
                 <button
                   key={f}
@@ -657,7 +692,7 @@ export default function PlatformAdminQueue({ adminName }) {
                     color: reportFilter === f ? T.navy : T.gray2,
                     fontWeight: 700, fontSize: 13, cursor: "pointer", padding: "4px 0", marginRight: 16,
                     borderBottom: reportFilter === f ? `2px solid ${T.navy}` : "2px solid transparent",
-                    textTransform: "capitalize", whiteSpace: "nowrap", flexShrink: 0,
+                    textTransform: "capitalize",
                   }}
                 >
                   {f}
@@ -680,6 +715,7 @@ export default function PlatformAdminQueue({ adminName }) {
                     report={report}
                     onDismiss={handleDismissReport}
                     onMarkReviewed={handleMarkReviewedReport}
+                    onMessage={handleMessageReporter}
                     busy={reportBusyId === report.id}
                   />
                 ))}
@@ -770,6 +806,34 @@ export default function PlatformAdminQueue({ adminName }) {
         </>
         )}
       </div>
+
+      {threadLoading && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ color: "#fff", fontSize: 14 }}>Opening conversation…</div>
+        </div>
+      )}
+
+      {activeThread && adminId && (
+        <div
+          onClick={() => setActiveThread(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, position: "relative" }}>
+            <button
+              onClick={() => setActiveThread(null)}
+              style={{
+                position: "absolute", top: -14, right: -14, background: "#fff", border: `1px solid ${T.border}`,
+                borderRadius: "50%", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", zIndex: 1,
+              }}
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+            <MessageThread enquiry={activeThread} currentUserId={adminId} currentUserRole="admin" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
