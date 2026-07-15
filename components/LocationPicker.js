@@ -213,8 +213,9 @@ export default function LocationPicker({ latitude, longitude, onChange, onAddres
       </p>
 
       <div style={{ position: "relative", marginBottom: 4 }}>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="homio-location-search-row" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input
+            className="homio-location-search-input"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -230,7 +231,7 @@ export default function LocationPicker({ latitude, longitude, onChange, onAddres
             type="button"
             onClick={handleSearch}
             disabled={searching}
-            style={{ background: T.navy, color: "#fff", border: "none", borderRadius: 8, padding: "0 16px", fontWeight: 700, fontSize: 13, cursor: searching ? "default" : "pointer", opacity: searching ? 0.6 : 1 }}
+            style={{ background: T.navy, color: "#fff", border: "none", borderRadius: 8, padding: "0 16px", fontWeight: 700, fontSize: 13, cursor: searching ? "default" : "pointer", opacity: searching ? 0.6 : 1, flex: "1 1 auto" }}
           >
             {searching ? "…" : "Search"}
           </button>
@@ -239,11 +240,19 @@ export default function LocationPicker({ latitude, longitude, onChange, onAddres
             onClick={handleUseCurrentLocation}
             disabled={locating}
             title="Use my current location"
-            style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", color: T.navy, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "0 14px", fontWeight: 700, fontSize: 13, cursor: locating ? "default" : "pointer", opacity: locating ? 0.6 : 1, whiteSpace: "nowrap" }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, background: "#fff", color: T.navy, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "0 14px", fontWeight: 700, fontSize: 13, cursor: locating ? "default" : "pointer", opacity: locating ? 0.6 : 1, whiteSpace: "nowrap", flex: "1 1 auto" }}
           >
             <LocateFixed size={14} /> {locating ? "…" : "My Location"}
           </button>
         </div>
+
+        <style jsx>{`
+          @media (max-width: 480px) {
+            .homio-location-search-input {
+              flex-basis: 100% !important;
+            }
+          }
+        `}</style>
 
         {showSuggestions && suggestions.length > 0 && (
           <div

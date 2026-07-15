@@ -138,8 +138,8 @@ export default function UserManagementTab() {
           No users found.
         </div>
       ) : (
-        <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: T.bg }}>
                 <th style={thStyle}>Name</th>

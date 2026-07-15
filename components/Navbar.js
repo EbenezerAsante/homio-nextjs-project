@@ -15,6 +15,28 @@ export default function Navbar() {
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [fullName, setFullName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  // On mobile, a fixed bottom nav bar can visually collide with the
+  // on-screen keyboard (a well-known mobile browser quirk — the bar can
+  // end up floating mid-screen instead of staying pinned to the bottom).
+  // Hiding it while any text field is actively focused avoids that
+  // entirely, since there's no useful room for it during typing anyway.
+  useEffect(() => {
+    const isTextField = (el) => el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA");
+    const handleFocusIn = (e) => {
+      if (isTextField(e.target)) setKeyboardOpen(true);
+    };
+    const handleFocusOut = (e) => {
+      if (isTextField(e.target)) setKeyboardOpen(false);
+    };
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+    };
+  }, []);
   const [profileOpen, setProfileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const profileRef = useRef(null);
@@ -27,7 +49,7 @@ export default function Navbar() {
   // Property pages already have their own sticky Call/WhatsApp/Message/Book
   // bar — showing the generic bottom tab nav there too would be redundant
   // and eat too much screen space.
-  const hideBottomNav = pathname?.startsWith("/property/");
+  const hideBottomNav = pathname?.startsWith("/property/") || keyboardOpen;
 
   useEffect(() => {
     if (!profileOpen) return;
