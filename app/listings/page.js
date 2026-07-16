@@ -2,12 +2,20 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase-server";
 import ListingsViewToggle from "../../components/ListingsViewToggle";
 import ListingsFilterPanel from "../../components/ListingsFilterPanel";
+import Pagination from "../../components/Pagination";
 import { T, REGIONS, CAT_LABEL } from "../../lib/constants";
 import { fetchOwnerTypeMap, withOwnerTypes } from "../../lib/badge-queries";
 
 export const revalidate = 30;
 
 const CATEGORIES = Object.keys(CAT_LABEL || {});
+const PAGE_SIZE = 24;
+
+// Only the columns PropertyCard / ListingsMap actually render — avoids
+// pulling every column (description, contact fields, etc.) on a page
+// that can list hundreds of properties.
+const LISTING_COLUMNS =
+  "id, title, price, listing_type, tag, furnished, area, city, region, bedrooms, bathrooms, sqft, agent_id, latitude, longitude, location_visibility, created_at, listing_images(url, sort_order)";
 
 export default async function ListingsPage({ searchParams }) {
   const supabase = createClient();
@@ -21,10 +29,13 @@ export default async function ListingsPage({ searchParams }) {
   const furnished = searchParams?.furnished || ""; // "yes" | ""
   const q = searchParams?.q || "";
   const sort = searchParams?.sort || "newest";
+  const page = Math.max(1, Number(searchParams?.page) || 1);
+  const rangeStart = (page - 1) * PAGE_SIZE;
+  const rangeEnd = rangeStart + PAGE_SIZE - 1;
 
   let query = supabase
     .from("listings")
-    .select("*, listing_images(url, sort_order)")
+    .select(LISTING_COLUMNS, { count: "exact" })
     .eq("status", "active");
 
   if (type) query = query.eq("listing_type", type);
@@ -44,7 +55,11 @@ export default async function ListingsPage({ searchParams }) {
   else if (sort === "price_desc") query = query.order("price", { ascending: false });
   else query = query.order("created_at", { ascending: false });
 
-  const { data: listings, error } = await query;
+  query = query.range(rangeStart, rangeEnd);
+
+  const { data: listings, error, count } = await query;
+  const totalCount = count || 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const ownerTypeMap = await fetchOwnerTypeMap(supabase);
   const listingsWithBadges = withOwnerTypes(listings || [], ownerTypeMap);
 
@@ -57,7 +72,7 @@ export default async function ListingsPage({ searchParams }) {
             {type === "sale" ? "Properties For Sale" : type === "rent" ? "Properties To Let" : "All Listings"}
           </h1>
           <p style={{ color: T.gray2, fontSize: 14, margin: 0 }}>
-            {listings ? `${listings.length} result${listings.length === 1 ? "" : "s"} found` : ""}
+            {listings ? `${totalCount} result${totalCount === 1 ? "" : "s"} found` : ""}
           </p>
         </div>
       </div>
@@ -86,7 +101,7 @@ export default async function ListingsPage({ searchParams }) {
           regions={REGIONS}
           categories={CATEGORIES}
           catLabel={CAT_LABEL}
-          resultCount={listings?.length}
+          resultCount={totalCount}
         />
 
         {/* Results */}
@@ -123,7 +138,14 @@ export default async function ListingsPage({ searchParams }) {
           )}
 
           {!error && listings && listings.length > 0 && (
-            <ListingsViewToggle listings={listingsWithBadges} />
+            <>
+              <ListingsViewToggle listings={listingsWithBadges} />
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                searchParams={searchParams}
+              />
+            </>
           )}
         </div>
       </div>

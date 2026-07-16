@@ -408,10 +408,12 @@ export default function PlatformAdminQueue({ adminName }) {
     setListingsLoading(false);
   };
 
+  const actor = { id: adminId, name: adminName || "Admin" };
+
   const handleApproveListing = async (id) => {
     setListingBusyId(id);
     try {
-      await approveListing(id);
+      await approveListing(id, actor);
       await loadPendingListings();
     } catch (e) {
       alert(e.message || "Failed to approve listing");
@@ -423,7 +425,7 @@ export default function PlatformAdminQueue({ adminName }) {
     const reason = prompt("Reason for rejecting this listing (optional):") || null;
     setListingBusyId(id);
     try {
-      await rejectListing(id, reason);
+      await rejectListing(id, reason, actor);
       await loadPendingListings();
     } catch (e) {
       alert(e.message || "Failed to reject listing");
@@ -447,7 +449,7 @@ export default function PlatformAdminQueue({ adminName }) {
   const handleDismissReport = async (id) => {
     setReportBusyId(id);
     try {
-      await updateReportStatus(id, "dismissed");
+      await updateReportStatus(id, "dismissed", actor);
       await loadReports();
     } catch (e) {
       alert(e.message || "Failed to update report");
@@ -458,7 +460,7 @@ export default function PlatformAdminQueue({ adminName }) {
   const handleMarkReviewedReport = async (id) => {
     setReportBusyId(id);
     try {
-      await updateReportStatus(id, "reviewed");
+      await updateReportStatus(id, "reviewed", actor);
       await loadReports();
     } catch (e) {
       alert(e.message || "Failed to update report");
@@ -469,7 +471,7 @@ export default function PlatformAdminQueue({ adminName }) {
   const handleApprove = async (role, userId) => {
     setBusyId(userId);
     try {
-      await approveApplication(role, userId);
+      await approveApplication(role, userId, null, actor);
       await load();
     } catch (e) {
       alert(e.message || "Failed to approve");
@@ -481,7 +483,7 @@ export default function PlatformAdminQueue({ adminName }) {
     if (!confirm("Reject this application? The applicant will need to re-apply.")) return;
     setBusyId(userId);
     try {
-      await rejectApplication(role, userId);
+      await rejectApplication(role, userId, null, actor);
       await load();
     } catch (e) {
       alert(e.message || "Failed to reject");
@@ -493,7 +495,7 @@ export default function PlatformAdminQueue({ adminName }) {
     if (!confirm("Revoke this person's access? They will lose their dashboard access immediately and would need to re-apply.")) return;
     setBusyId(userId);
     try {
-      await revokeApplication(role, userId);
+      await revokeApplication(role, userId, null, actor);
       await load();
     } catch (e) {
       alert(e.message || "Failed to revoke");

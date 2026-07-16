@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase-server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function POST(request) {
   const { userId, action } = await request.json(); // action: "suspend" | "activate"
@@ -18,7 +19,7 @@ export async function POST(request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_platform_admin")
+    .select("is_platform_admin, full_name")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -107,6 +108,24 @@ export async function POST(request) {
       });
     }
   }
+
+  // Snapshot the target's identity for the audit trail — the profile
+  // row can change or the account can be deleted later, so this label
+  // needs to be captured now, not looked up at read time.
+  const { data: targetProfile } = await adminClient
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  await logAdminAction(adminClient, {
+    actorId: user.id,
+    actorName: profile.full_name || user.email || "Unknown admin",
+    action: action === "suspend" ? "user.suspend" : "user.activate",
+    targetType: "user",
+    targetId: userId,
+    targetLabel: targetProfile?.full_name || targetProfile?.email || userId,
+  });
 
   return NextResponse.json({ success: true });
 }
