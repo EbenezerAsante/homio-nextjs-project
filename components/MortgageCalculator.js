@@ -45,9 +45,12 @@ export default function MortgageCalculator({ price }) {
         onClick={() => setOpen((o) => !o)}
         style={{
           width: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 8,
           background: "none",
           border: "none",
           cursor: "pointer",
@@ -55,11 +58,23 @@ export default function MortgageCalculator({ price }) {
           marginBottom: open ? 4 : 0,
         }}
       >
-        <h3 style={{ margin: 0, color: T.navy, fontSize: 16 }}>🧮 Mortgage Calculator</h3>
+        <h3
+          style={{
+            margin: 0,
+            color: T.navy,
+            fontSize: 16,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          🧮 Mortgage Calculator
+        </h3>
         <ChevronDown
           size={18}
           color={T.gray2}
-          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+          style={{ flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
         />
       </button>
 

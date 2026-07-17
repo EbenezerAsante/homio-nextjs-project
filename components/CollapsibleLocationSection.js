@@ -14,9 +14,12 @@ export default function CollapsibleLocationSection({ p, displayCoords }) {
         onClick={() => setOpen((o) => !o)}
         style={{
           width: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 8,
           background: "none",
           border: "none",
           cursor: "pointer",
@@ -24,11 +27,23 @@ export default function CollapsibleLocationSection({ p, displayCoords }) {
           marginBottom: open ? 12 : 0,
         }}
       >
-        <h3 style={{ margin: 0, color: T.navy, fontSize: 16 }}>📍 Map &amp; Location</h3>
+        <h3
+          style={{
+            margin: 0,
+            color: T.navy,
+            fontSize: 16,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          📍 Map &amp; Location
+        </h3>
         <ChevronDown
           size={18}
           color={T.gray2}
-          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+          style={{ flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
         />
       </button>
 
