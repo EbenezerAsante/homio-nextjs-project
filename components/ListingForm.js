@@ -186,7 +186,6 @@ export default function ListingForm({ userId, existing, onDone, onCancel }) {
 
           <div style={{ marginTop: 20 }}>
             <VideoUploader
-              agentId={userId}
               listingId={savedListing.id}
               videoUrl={videoUrl}
               onChange={setVideoUrl}
