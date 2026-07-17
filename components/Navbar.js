@@ -43,6 +43,8 @@ export default function Navbar() {
   const profileRef = useRef(null);
   const moreRef = useRef(null);
   const accountRef = useRef(null);
+  const menuRef = useRef(null);
+  const hamburgerRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -85,6 +87,19 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [accountMenuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e) => {
+      const clickedMenu = menuRef.current && menuRef.current.contains(e.target);
+      const clickedHamburger = hamburgerRef.current && hamburgerRef.current.contains(e.target);
+      if (!clickedMenu && !clickedHamburger) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   // Close any open mobile menu when navigating to a new page.
   useEffect(() => {
@@ -338,6 +353,7 @@ export default function Navbar() {
 
         {/* Hamburger — opens the site pages menu, mobile only */}
         <button
+          ref={hamburgerRef}
           className="homio-hamburger"
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Menu"
@@ -360,6 +376,7 @@ export default function Navbar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div
+          ref={menuRef}
           className="homio-mobile-menu"
           style={{
             borderTop: `1px solid ${T.border}`,
