@@ -22,6 +22,15 @@ h1, h2, h3 {
   font-family: var(--font-heading), Georgia, serif;
 }
 
+h1, h2, h3, h4, p {
+  /* Long titles/addresses/prices should always reflow to fit their
+     container instead of overflowing past its edge — this is what was
+     actually making listing titles run off-screen on narrow phones,
+     separate from the page-level scroll issue fixed above. */
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 a {
   color: inherit;
   text-decoration: none;

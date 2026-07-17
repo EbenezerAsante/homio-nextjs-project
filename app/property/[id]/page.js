@@ -206,7 +206,7 @@ export default async function PropertyDetail({ params }) {
             <CollapsibleLocationSection p={p} displayCoords={displayCoords} />
           </div>
 
-          <div className="homio-detail-sidebar" style={{ width: 320, flexShrink: 0 }}>
+          <div className="homio-detail-sidebar" style={{ width: 320, minWidth: 0, flexShrink: 0 }}>
             <div id="enquiry-section" style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
               <div style={{ fontWeight: 800, color: T.navy, marginBottom: 4, fontSize: 15 }}>
                 {p.agents?.company || "Homio Agent"}
