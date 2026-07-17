@@ -39,8 +39,10 @@ export default function Navbar() {
   }, []);
   const [profileOpen, setProfileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const profileRef = useRef(null);
   const moreRef = useRef(null);
+  const accountRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -72,6 +74,23 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [moreOpen]);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handleClick = (e) => {
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [accountMenuOpen]);
+
+  // Close any open mobile menu when navigating to a new page.
+  useEffect(() => {
+    setMenuOpen(false);
+    setAccountMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     document.body.classList.toggle("homio-has-bottom-nav", !hideBottomNav);
@@ -317,19 +336,19 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Hamburger — visible only on small screens */}
+        {/* Hamburger — opens the site pages menu, mobile only */}
         <button
           className="homio-hamburger"
           onClick={() => setMenuOpen((v) => !v)}
           aria-label="Menu"
           style={{
-            display: "none",
             marginLeft: "auto",
             background: "none",
             border: "none",
             cursor: "pointer",
             padding: 8,
             flexShrink: 0,
+            alignItems: "center",
           }}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -375,34 +394,9 @@ export default function Navbar() {
           <Link href="/contact" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             Contact
           </Link>
-          <div style={{ height: 1, background: T.border, margin: "8px 0" }} />
-          {user ? (
+          {!user && (
             <>
-              <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-                Dashboard
-              </Link>
-              <Link href="/dashboard/roles" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-                My Roles
-              </Link>
-              {isAgent && (
-                <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.navy, fontWeight: 700 }}>
-                  Agent Admin
-                </Link>
-              )}
-              {isPlatformAdmin && (
-                <Link href="/platform-admin" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gold, fontWeight: 700 }}>
-                  Platform Admin
-                </Link>
-              )}
-              <button
-                onClick={() => { setMenuOpen(false); signOut(); }}
-                style={{ textAlign: "left", padding: "10px 4px", fontSize: 15, color: T.gray2, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}
-              >
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <>
+              <div style={{ height: 1, background: T.border, margin: "8px 0" }} />
               <Link href="/login" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
                 Sign in
               </Link>
@@ -428,12 +422,15 @@ export default function Navbar() {
       )}
 
       <style jsx global>{`
+        .homio-hamburger {
+          display: none;
+        }
         @media (max-width: 768px) {
           .homio-desktop-nav {
             display: none !important;
           }
           .homio-hamburger {
-            display: none !important;
+            display: flex !important;
           }
         }
         .homio-bottom-nav {
@@ -515,14 +512,96 @@ export default function Navbar() {
           {unreadCount > 0 && <span className="homio-bottom-badge" />}
           <span>Messages</span>
         </Link>
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className={`homio-bottom-tab${menuOpen || pathname === "/dashboard" || pathname?.startsWith("/dashboard/appointments") || pathname?.startsWith("/dashboard/owner") || pathname?.startsWith("/platform-admin") || pathname?.startsWith("/saved") ? " active" : ""}`}
-        >
-          <User size={20} />
-          <span>Account</span>
-        </button>
+        {user ? (
+          <button
+            onClick={() => setAccountMenuOpen((v) => !v)}
+            className={`homio-bottom-tab${accountMenuOpen || pathname === "/dashboard" || pathname?.startsWith("/dashboard/appointments") || pathname?.startsWith("/dashboard/owner") || pathname?.startsWith("/platform-admin") || pathname?.startsWith("/saved") ? " active" : ""}`}
+          >
+            <User size={20} />
+            <span>Account</span>
+          </button>
+        ) : (
+          <Link href="/login" className="homio-bottom-tab">
+            <User size={20} />
+            <span>Account</span>
+          </Link>
+        )}
       </nav>
+    )}
+
+    {/* Account panel — opened from the bottom-nav Account tab.
+        Deliberately shows only the signed-in user's own info and role
+        controls, not site pages — those live behind the hamburger menu
+        in the header instead, so the two stay separated. */}
+    {accountMenuOpen && user && (
+      <div
+        ref={accountRef}
+        style={{
+          position: "fixed",
+          bottom: hideBottomNav ? 0 : 62,
+          left: 0,
+          right: 0,
+          zIndex: 499,
+          background: "#fff",
+          borderTop: `1px solid ${T.border}`,
+          boxShadow: "0 -4px 16px rgba(0,0,0,0.08)",
+          padding: "16px 20px calc(16px + env(safe-area-inset-bottom))",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: T.navy,
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 800,
+              fontSize: 16,
+              flexShrink: 0,
+            }}
+          >
+            {(fullName || user.email || "?").charAt(0).toUpperCase()}
+          </div>
+          <div style={{ overflow: "hidden" }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {fullName || "My Account"}
+            </div>
+            <div style={{ fontSize: 12.5, color: T.gray2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {user.email}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Link href="/dashboard" onClick={() => setAccountMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            <LayoutDashboard size={17} /> My Dashboard
+          </Link>
+          <Link href="/dashboard/roles" onClick={() => setAccountMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            <ListChecks size={17} /> My Roles
+          </Link>
+          {isAgent && (
+            <Link href="/admin" onClick={() => setAccountMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 4px", fontSize: 15, color: T.navy, fontWeight: 700 }}>
+              <ShieldCheck size={17} /> Agent Admin
+            </Link>
+          )}
+          {isPlatformAdmin && (
+            <Link href="/platform-admin" onClick={() => setAccountMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 4px", fontSize: 15, color: T.gold, fontWeight: 700 }}>
+              <Crown size={17} /> Platform Admin
+            </Link>
+          )}
+          <div style={{ height: 1, background: T.border, margin: "6px 0" }} />
+          <button
+            onClick={() => { setAccountMenuOpen(false); signOut(); }}
+            style={{ display: "flex", alignItems: "center", gap: 9, textAlign: "left", padding: "10px 4px", fontSize: 15, color: T.gray2, fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}
+          >
+            <LogOut size={17} /> Sign Out
+          </button>
+        </div>
+      </div>
     )}
     </>
   );
