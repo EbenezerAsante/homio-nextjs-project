@@ -514,11 +514,20 @@ export default function PlatformAdminQueue({ adminName }) {
         </h1>
 
         {/* Top-level view switcher */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${T.border}` }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginBottom: 24,
+            borderBottom: `1px solid ${T.border}`,
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
           <button
             onClick={() => setActiveView("overview")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
               border: "none", background: "none", cursor: "pointer",
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "overview" ? T.navy : T.gray2,
@@ -530,7 +539,7 @@ export default function PlatformAdminQueue({ adminName }) {
           <button
             onClick={() => setActiveView("users")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
               border: "none", background: "none", cursor: "pointer",
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "users" ? T.navy : T.gray2,
@@ -542,7 +551,7 @@ export default function PlatformAdminQueue({ adminName }) {
           <button
             onClick={() => setActiveView("listings")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
               border: "none", background: "none", cursor: "pointer",
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "listings" ? T.navy : T.gray2,
@@ -559,7 +568,7 @@ export default function PlatformAdminQueue({ adminName }) {
           <button
             onClick={() => setActiveView("applications")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
               border: "none", background: "none", cursor: "pointer",
               padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "applications" ? T.navy : T.gray2,
@@ -571,7 +580,7 @@ export default function PlatformAdminQueue({ adminName }) {
           <button
             onClick={() => setActiveView("contact")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
               border: "none", background: "none", cursor: "pointer",
               padding: "10px 4px", fontSize: 14, fontWeight: 700,
               color: activeView === "contact" ? T.navy : T.gray2,
@@ -588,7 +597,7 @@ export default function PlatformAdminQueue({ adminName }) {
           <button
             onClick={() => setActiveView("reports")}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
               border: "none", background: "none", cursor: "pointer",
               padding: "10px 4px", marginLeft: 20, fontSize: 14, fontWeight: 700,
               color: activeView === "reports" ? T.navy : T.gray2,
