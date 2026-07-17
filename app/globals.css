@@ -64,6 +64,14 @@ img {
 @media (max-width: 900px) {
   .homio-detail-layout {
     flex-direction: column !important;
+    /* The inline alignItems:"flex-start" on this container is correct
+       in row mode (top-aligns the two columns), but once flex-direction
+       flips to column here, align-items controls the horizontal axis
+       instead — without this override, "flex-start" makes every child
+       (gallery, thumbnails, cards) shrink to fit its own content width
+       instead of filling the screen, which is what was pushing the
+       image/arrows/text off-center on mobile. */
+    align-items: stretch !important;
   }
   .homio-detail-sidebar {
     width: 100% !important;
