@@ -162,7 +162,18 @@ export default async function PropertyDetail({ params }) {
             )}
 
             <div style={{ background: "#fff", borderRadius: 10, padding: 24, marginBottom: 16, border: `1px solid ${T.border}` }}>
-              <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 24, margin: "0 0 6px" }}>{p.title}</h1>
+              <h1
+                style={{
+                  color: T.navy,
+                  fontWeight: 900,
+                  fontSize: "clamp(19px, 5vw, 24px)",
+                  lineHeight: 1.28,
+                  margin: "0 0 8px",
+                  textWrap: "balance",
+                }}
+              >
+                {p.title}
+              </h1>
               <p style={{ color: T.gray2, margin: "0 0 14px", fontSize: 14 }}>📍 {p.area ? `${p.area}, ` : ""}{p.city}, {p.region}</p>
               <div style={{ fontSize: 32, fontWeight: 900, color: T.gold }}>
                 {fmt(p.price, p.listing_type)}
