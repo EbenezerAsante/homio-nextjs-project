@@ -14,75 +14,91 @@ export default function EnquiriesTab({ enquiries, userId, onChange }) {
     onChange();
   };
 
-  return (
-    <div>
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Contact</th>
-            <th>Listing</th>
-            <th>Message</th>
-            <th>Status</th>
-            <th>Received</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {enquiries.length === 0 ? (
-            <tr><td colSpan={7} style={{ textAlign: "center", color: T.gray2, padding: 20 }}>No enquiries yet</td></tr>
-          ) : (
-            enquiries.map((e) => (
-              <tr key={e.id}>
-                <td>{e.name}</td>
-                <td>
-                  <div>{e.phone}</div>
-                  <div style={{ fontSize: 12, color: T.gray2 }}>{e.email}</div>
-                </td>
-                <td>{e.listings?.title || "—"}</td>
-                <td style={{ maxWidth: 240 }}>{e.message}</td>
-                <td>
-                  <select
-                    value={e.status}
-                    onChange={(ev) => handleStatusChange(e.id, ev.target.value)}
-                    style={{ border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 8px", fontSize: 13 }}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="responded">Responded</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </td>
-                <td style={{ fontSize: 13, color: T.gray2 }}>
-                  {e.created_at ? new Date(e.created_at).toLocaleDateString() : "—"}
-                </td>
-                <td>
-                  {e.buyer_id ? (
-                    <button
-                      onClick={() => setOpenThreadId(openThreadId === e.id ? null : e.id)}
-                      title="Message buyer"
-                      style={{ background: T.bg, border: "none", borderRadius: 6, padding: "5px 8px", cursor: "pointer", color: T.navy, display: "flex", alignItems: "center" }}
-                    >
-                      <MessageCircle size={14} />
-                    </button>
-                  ) : (
-                    <span style={{ fontSize: 11, color: T.gray2 }}>No account</span>
-                  )}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+  if (enquiries.length === 0) {
+    return (
+      <div style={{ textAlign: "center", color: T.gray2, padding: 30, background: "#fff", borderRadius: 10, border: `1px solid ${T.border}` }}>
+        No enquiries yet
+      </div>
+    );
+  }
 
-      {openThreadId && (
-        <div style={{ marginTop: 16, maxWidth: 480 }}>
-          <MessageThread
-            enquiry={enquiries.find((e) => e.id === openThreadId)}
-            currentUserId={userId}
-            currentUserRole="agent"
-          />
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {enquiries.map((e) => (
+        <div key={e.id}>
+          <div
+            style={{
+              background: "#fff",
+              border: `1px solid ${T.border}`,
+              borderRadius: 10,
+              padding: 14,
+              boxSizing: "border-box",
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, minWidth: 0, overflowWrap: "break-word" }}>
+                {e.name}
+              </div>
+              <div style={{ fontSize: 11.5, color: T.gray2, flexShrink: 0, whiteSpace: "nowrap" }}>
+                {e.created_at ? new Date(e.created_at).toLocaleDateString() : "—"}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12.5, color: T.navy, fontWeight: 600, marginTop: 4, overflowWrap: "break-word" }}>
+              {e.listings?.title || "—"}
+            </div>
+
+            <div style={{ fontSize: 12.5, color: T.gray2, marginTop: 4, overflowWrap: "break-word" }}>
+              {e.phone}{e.email ? ` • ${e.email}` : ""}
+            </div>
+
+            {e.message && (
+              <div style={{ fontSize: 13, color: T.gray1, marginTop: 8, background: T.bg, borderRadius: 6, padding: "8px 10px", overflowWrap: "break-word" }}>
+                {e.message}
+              </div>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+              <select
+                value={e.status}
+                onChange={(ev) => handleStatusChange(e.id, ev.target.value)}
+                style={{ border: `1px solid ${T.border}`, borderRadius: 6, padding: "5px 8px", fontSize: 13, minWidth: 0 }}
+              >
+                <option value="pending">Pending</option>
+                <option value="responded">Responded</option>
+                <option value="closed">Closed</option>
+              </select>
+
+              {e.buyer_id ? (
+                <button
+                  onClick={() => setOpenThreadId(openThreadId === e.id ? null : e.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    background: T.bg, border: "none", borderRadius: 6, padding: "6px 10px",
+                    cursor: "pointer", color: T.navy, fontSize: 13, fontWeight: 600,
+                  }}
+                >
+                  <MessageCircle size={14} /> {openThreadId === e.id ? "Hide thread" : "Message buyer"}
+                </button>
+              ) : (
+                <span style={{ fontSize: 11.5, color: T.gray2 }}>No account</span>
+              )}
+            </div>
+          </div>
+
+          {openThreadId === e.id && (
+            <div style={{ marginTop: 8 }}>
+              <MessageThread
+                enquiry={enquiries.find((x) => x.id === openThreadId)}
+                currentUserId={userId}
+                currentUserRole="agent"
+              />
+            </div>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }
