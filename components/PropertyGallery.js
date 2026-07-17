@@ -8,10 +8,10 @@ export default function PropertyGallery({ images, title }) {
   const list = images.length ? images : ["https://via.placeholder.com/800x500?text=Homio"];
 
   return (
-    <div>
+    <div style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       <div
         className="homio-detail-gallery"
-        style={{ position: "relative", borderRadius: 12, overflow: "hidden", marginBottom: 10, height: 420, background: "#111" }}
+        style={{ position: "relative", width: "100%", boxSizing: "border-box", borderRadius: 12, overflow: "hidden", marginBottom: 10, height: 420, background: "#111" }}
       >
         <img src={list[active]} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
 
@@ -23,7 +23,7 @@ export default function PropertyGallery({ images, title }) {
               style={{
                 position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
                 background: "rgba(0,0,0,.5)", color: "#fff", border: "none", borderRadius: 6,
-                width: 36, height: 36, fontSize: 18, cursor: "pointer",
+                width: 36, height: 36, fontSize: 18, cursor: "pointer", zIndex: 2,
               }}
             >
               ‹
@@ -34,7 +34,7 @@ export default function PropertyGallery({ images, title }) {
               style={{
                 position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
                 background: "rgba(0,0,0,.5)", color: "#fff", border: "none", borderRadius: 6,
-                width: 36, height: 36, fontSize: 18, cursor: "pointer",
+                width: 36, height: 36, fontSize: 18, cursor: "pointer", zIndex: 2,
               }}
             >
               ›
@@ -53,7 +53,7 @@ export default function PropertyGallery({ images, title }) {
       </div>
 
       {list.length > 1 && (
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+        <div style={{ display: "flex", gap: 8, width: "100%", maxWidth: "100%", boxSizing: "border-box", overflowX: "auto", paddingBottom: 4 }}>
           {list.map((src, i) => (
             <button
               key={i}

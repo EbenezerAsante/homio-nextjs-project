@@ -138,8 +138,8 @@ export default async function PropertyDetail({ params }) {
           </div>
         )}
         <div className="homio-detail-layout" style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 620px", minWidth: 0 }}>
-            <div style={{ marginBottom: 20 }}>
+          <div style={{ flex: "1 1 620px", minWidth: 0, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
+            <div style={{ marginBottom: 20, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
               <PropertyGallery images={images} title={p.title} />
             </div>
 
