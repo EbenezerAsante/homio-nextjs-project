@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
-import { fetchUnreadCount } from "../lib/messaging-queries";
+import { fetchTotalUnreadCount } from "../lib/conversation-queries";
 import { T } from "../lib/constants";
 import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail, Home, PlusCircle, User } from "lucide-react";
 
@@ -65,6 +65,14 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [profileOpen]);
+
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      fetchTotalUnreadCount(user.id).then(setUnreadCount);
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -136,7 +144,7 @@ export default function Navbar() {
           .maybeSingle();
         setIsPlatformAdmin(!!profileRow?.is_platform_admin);
         setFullName(profileRow?.full_name || "");
-        fetchUnreadCount(currentUser.id).then(setUnreadCount);
+        fetchTotalUnreadCount(currentUser.id).then(setUnreadCount);
       }
     });
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -156,7 +164,7 @@ export default function Navbar() {
           .maybeSingle();
         setIsPlatformAdmin(!!profileRow?.is_platform_admin);
         setFullName(profileRow?.full_name || "");
-        fetchUnreadCount(currentUser.id).then(setUnreadCount);
+        fetchTotalUnreadCount(currentUser.id).then(setUnreadCount);
       } else {
         setIsAgent(false);
         setIsPlatformAdmin(false);

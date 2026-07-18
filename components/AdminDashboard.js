@@ -63,15 +63,33 @@ export default function AdminDashboard({ agent, userId }) {
         <div className="admin-sidebar-logo">
           Homio<span>.</span>
         </div>
-        {NAV_ITEMS.map((item) => (
-          <div
-            key={item.id}
-            className={`admin-nav-item ${activeTab === item.id ? "active" : ""}`}
-            onClick={() => setActiveTab(item.id)}
-          >
-            {item.label}
-          </div>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const unreadTotal = item.id === "enquiries" ? conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0) : 0;
+          return (
+            <div
+              key={item.id}
+              className={`admin-nav-item ${activeTab === item.id ? "active" : ""}`}
+              onClick={() => setActiveTab(item.id)}
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+            >
+              <span>{item.label}</span>
+              {unreadTotal > 0 && (
+                <span
+                  style={{
+                    background: T.gold,
+                    color: "#fff",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    padding: "1px 7px",
+                  }}
+                >
+                  {unreadTotal}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </aside>
 
       <main className="admin-main">
