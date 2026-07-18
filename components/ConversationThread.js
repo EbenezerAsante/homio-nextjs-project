@@ -5,7 +5,7 @@ import { fetchConversationMessages, sendConversationMessage, markConversationRea
 import { T } from "@/lib/constants";
 import { Send } from "lucide-react";
 
-export default function ConversationThread({ conversation, currentUserId, currentUserRole, fill = false }) {
+export default function ConversationThread({ conversation, currentUserId, currentUserRole, fill = false, readOnly = false }) {
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function ConversationThread({ conversation, currentUserId, curren
     const data = await fetchConversationMessages(conversation.id);
     setMessages(data);
     setLoading(false);
-    markConversationRead(conversation.id, currentUserId);
+    if (!readOnly) markConversationRead(conversation.id, currentUserId);
   };
 
   useEffect(() => {
@@ -87,22 +87,24 @@ export default function ConversationThread({ conversation, currentUserId, curren
         <div ref={bottomRef} />
       </div>
 
-      <div style={{ display: "flex", gap: 8, padding: 12, borderTop: `1px solid ${T.border}` }}>
-        <input
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Type a message…"
-          style={{ flex: 1, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13.5, minWidth: 0 }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={sending || !body.trim()}
-          style={{ background: T.navy, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", cursor: sending ? "default" : "pointer", opacity: sending || !body.trim() ? 0.6 : 1, display: "flex", alignItems: "center", flexShrink: 0 }}
-        >
-          <Send size={15} />
-        </button>
-      </div>
+      {!readOnly && (
+        <div style={{ display: "flex", gap: 8, padding: 12, borderTop: `1px solid ${T.border}` }}>
+          <input
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Type a message…"
+            style={{ flex: 1, border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13.5, minWidth: 0 }}
+          />
+          <button
+            onClick={handleSend}
+            disabled={sending || !body.trim()}
+            style={{ background: T.navy, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", cursor: sending ? "default" : "pointer", opacity: sending || !body.trim() ? 0.6 : 1, display: "flex", alignItems: "center", flexShrink: 0 }}
+          >
+            <Send size={15} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

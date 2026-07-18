@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase-client";
 import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag, X } from "lucide-react";
 import UserManagementTab from "./UserManagementTab";
 import MessageThread from "./MessageThread";
+import AdminMessageCenter from "./AdminMessageCenter";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -611,6 +612,18 @@ export default function PlatformAdminQueue({ adminName }) {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveView("messageCenter")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+              border: "none", background: "none", cursor: "pointer",
+              padding: "10px 4px", marginLeft: 20, fontSize: 14, fontWeight: 700,
+              color: activeView === "messageCenter" ? T.navy : T.gray2,
+              borderBottom: activeView === "messageCenter" ? `2px solid ${T.navy}` : "2px solid transparent",
+            }}
+          >
+            <MessageSquare size={15} /> Message Center
+          </button>
         </div>
 
         {activeView === "overview" ? (
@@ -751,7 +764,7 @@ export default function PlatformAdminQueue({ adminName }) {
               </div>
             )}
           </>
-        ) : (
+        ) : activeView === "applications" ? (
         <>
         {/* Role tabs */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
@@ -833,7 +846,9 @@ export default function PlatformAdminQueue({ adminName }) {
           </div>
         )}
         </>
-        )}
+        ) : activeView === "messageCenter" ? (
+          <AdminMessageCenter adminId={adminId} />
+        ) : null}
       </div>
 
       {threadLoading && (
