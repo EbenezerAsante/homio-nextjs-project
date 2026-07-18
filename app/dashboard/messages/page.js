@@ -21,6 +21,15 @@ function formatWhen(iso) {
   return d.toLocaleDateString([], { day: "numeric", month: "short" });
 }
 
+const STATUS_LABEL = {
+  active: { label: "Available", color: T.green },
+  under_offer: { label: "Under Offer", color: T.gold },
+  taken: { label: "Sold", color: T.gray2 },
+  rented: { label: "Rented", color: T.gray2 },
+  expired: { label: "Expired", color: T.gray2 },
+  pending: { label: "Pending Review", color: T.gold },
+};
+
 export default function BuyerMessagesPageWrapper() {
   return (
     <Suspense fallback={<div style={{ padding: 60, textAlign: "center", color: T.gray2 }}>Loading messages…</div>}>
@@ -143,8 +152,8 @@ function BuyerMessagesPage() {
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
           {[
             { id: "all", label: "All" },
-            { id: "listings", label: "My Listings" },
-            { id: "enquiries", label: "My Enquiries" },
+            { id: "listings", label: "Listings" },
+            { id: "enquiries", label: "Enquiries" },
           ].map((tab) => {
             const count =
               tab.id === "all"
@@ -191,6 +200,7 @@ function BuyerMessagesPage() {
               const cover = listing?.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url;
               const unread = c.unreadCount > 0;
               const isListing = c.myRole === "agent";
+              const statusMeta = STATUS_LABEL[listing?.status] || null;
               return (
                 <button
                   key={c.id}
@@ -216,7 +226,7 @@ function BuyerMessagesPage() {
                   )}
 
                   <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
                       <span
                         style={{
                           fontSize: 9.5,
@@ -230,36 +240,58 @@ function BuyerMessagesPage() {
                           flexShrink: 0,
                         }}
                       >
-                        {isListing ? "My Listing" : "My Enquiry"}
+                        {isListing ? "My Listing" : "Enquiry"}
                       </span>
+                      {statusMeta && (
+                        <span
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            letterSpacing: 0.3,
+                            textTransform: "uppercase",
+                            color: statusMeta.color,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {statusMeta.label}
+                        </span>
+                      )}
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 13.5,
+                        color: T.navy,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      🏡 {listing?.title || "Listing"}
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginTop: 3 }}>
                       <div
                         style={{
                           fontWeight: unread ? 800 : 700,
                           fontSize: 14,
-                          color: T.navy,
+                          color: T.gray1,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                           minWidth: 0,
                         }}
                       >
-                        {listing?.title || "Listing"}
+                        {c.counterpartName}
                       </div>
-                      <div style={{ fontSize: 11, color: unread ? T.gold : T.gray2, fontWeight: unread ? 700 : 500, flexShrink: 0 }}>
-                        {formatWhen(c.lastMessage?.created_at || c.created_at)}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 12, color: T.gray2, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      with {c.counterpartName}
                     </div>
                     <div
                       style={{
                         fontSize: 13,
                         color: unread ? T.gray1 : T.gray2,
                         fontWeight: unread ? 700 : 400,
-                        marginTop: 3,
+                        marginTop: 1,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -267,28 +299,26 @@ function BuyerMessagesPage() {
                     >
                       {c.lastMessage?.body || "No messages yet"}
                     </div>
-                  </div>
-
-                  {unread && (
-                    <div
-                      style={{
-                        flexShrink: 0,
-                        minWidth: 20,
-                        height: 20,
-                        borderRadius: 999,
-                        background: T.gold,
-                        color: "#fff",
-                        fontSize: 11,
-                        fontWeight: 800,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "0 5px",
-                      }}
-                    >
-                      {c.unreadCount}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                      {unread && (
+                        <span
+                          style={{
+                            fontSize: 10.5,
+                            fontWeight: 800,
+                            color: "#fff",
+                            background: T.gold,
+                            borderRadius: 999,
+                            padding: "2px 8px",
+                          }}
+                        >
+                          {c.unreadCount} New
+                        </span>
+                      )}
+                      <span style={{ fontSize: 11, color: T.gray2, fontWeight: 500 }}>
+                        {formatWhen(c.lastMessage?.created_at || c.created_at)}
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </button>
               );
             })}
