@@ -30,6 +30,14 @@ const STATUS_LABEL = {
   pending: { label: "Pending Review", color: T.gold },
 };
 
+const AVATAR_COLORS = ["#1B3A6B", "#C8961E", "#16A34A", "#7C3AED", "#DC2626", "#0891B2", "#9333EA", "#EA580C"];
+function avatarColor(name) {
+  const str = name || "?";
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 export default function BuyerMessagesPageWrapper() {
   return (
     <Suspense fallback={<div style={{ padding: 60, textAlign: "center", color: T.gray2 }}>Loading messages…</div>}>
@@ -118,9 +126,31 @@ function BuyerMessagesPage() {
               <ChevronLeft size={22} color={T.navy} />
             </button>
             {cover ? (
-              <img src={cover} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <img src={cover} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", display: "block" }} />
+                <div
+                  style={{
+                    position: "absolute", bottom: -3, right: -3, width: 16, height: 16, borderRadius: "50%",
+                    background: avatarColor(selected.counterpartName), color: "#fff", fontSize: 9, fontWeight: 800,
+                    display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #fff",
+                  }}
+                >
+                  {(selected.counterpartName || "?").charAt(0).toUpperCase()}
+                </div>
+              </div>
             ) : (
-              <div style={{ width: 40, height: 40, borderRadius: 8, background: T.bg, flexShrink: 0 }} />
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: T.bg }} />
+                <div
+                  style={{
+                    position: "absolute", bottom: -3, right: -3, width: 16, height: 16, borderRadius: "50%",
+                    background: avatarColor(selected.counterpartName), color: "#fff", fontSize: 9, fontWeight: 800,
+                    display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #fff",
+                  }}
+                >
+                  {(selected.counterpartName || "?").charAt(0).toUpperCase()}
+                </div>
+              </div>
             )}
             <div style={{ minWidth: 0, overflow: "hidden" }}>
               <div style={{ fontWeight: 800, fontSize: 14.5, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -220,9 +250,53 @@ function BuyerMessagesPage() {
                   }}
                 >
                   {cover ? (
-                    <img src={cover} alt="" style={{ width: 54, height: 54, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <img src={cover} alt="" style={{ width: 54, height: 54, borderRadius: 10, objectFit: "cover", display: "block" }} />
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: -4,
+                          right: -4,
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          background: avatarColor(c.counterpartName),
+                          color: "#fff",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid #fff",
+                        }}
+                      >
+                        {(c.counterpartName || "?").charAt(0).toUpperCase()}
+                      </div>
+                    </div>
                   ) : (
-                    <div style={{ width: 54, height: 54, borderRadius: 10, background: T.bg, flexShrink: 0 }} />
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <div style={{ width: 54, height: 54, borderRadius: 10, background: T.bg }} />
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: -4,
+                          right: -4,
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          background: avatarColor(c.counterpartName),
+                          color: "#fff",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px solid #fff",
+                        }}
+                      >
+                        {(c.counterpartName || "?").charAt(0).toUpperCase()}
+                      </div>
+                    </div>
                   )}
 
                   <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
