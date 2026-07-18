@@ -12,7 +12,7 @@ export default function EnquiriesTab({ conversations, userId, onChange }) {
     return (
       <div style={{ background: "#fff", border: `1px dashed ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: T.gray2 }}>
         <MessageCircle size={28} color={T.gray2} style={{ marginBottom: 10 }} />
-        <div>No conversations yet — they'll appear here as soon as a buyer messages you.</div>
+        <div>No customer conversations yet — they'll appear here as soon as a buyer messages you about one of your listings.</div>
       </div>
     );
   }

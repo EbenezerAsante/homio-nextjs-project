@@ -17,7 +17,7 @@ import "../styles/admin.css";
 const NAV_ITEMS = [
   { id: "overview", label: "Overview" },
   { id: "listings", label: "Listings" },
-  { id: "enquiries", label: "Messages" },
+  { id: "enquiries", label: "Customer Inbox" },
   { id: "appointments", label: "Appointments" },
   { id: "analytics", label: "Analytics" },
   { id: "profile", label: "Profile" },

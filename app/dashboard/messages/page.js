@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
-import { fetchBuyerConversationsV2 } from "@/lib/conversation-queries";
+import { fetchAllUserConversationsV2 } from "@/lib/conversation-queries";
 import ConversationThread from "@/components/ConversationThread";
 import { T } from "@/lib/constants";
 import { MessageCircle, ChevronLeft } from "lucide-react";
@@ -39,7 +39,7 @@ function BuyerMessagesPage() {
   const [loading, setLoading] = useState(true);
 
   const load = async (uid) => {
-    const convos = await fetchBuyerConversationsV2(uid);
+    const convos = await fetchAllUserConversationsV2(uid);
     setConversations(convos);
     return convos;
   };
@@ -117,13 +117,13 @@ function BuyerMessagesPage() {
                 {listing?.title || "Listing"}
               </div>
               <div style={{ fontSize: 12, color: T.gray2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {listing?.agents?.full_name ? `with ${listing.agents.full_name}` : listing?.city || ""}
+                with {selected.counterpartName}
               </div>
             </div>
           </div>
 
           <div style={{ padding: "16px 20px 0" }}>
-            <ConversationThread conversation={selected} currentUserId={user.id} currentUserRole="buyer" />
+            <ConversationThread conversation={selected} currentUserId={user.id} currentUserRole={selected.myRole} />
           </div>
         </div>
       </div>
@@ -142,7 +142,7 @@ function BuyerMessagesPage() {
         {conversations.length === 0 ? (
           <div style={{ background: "#fff", border: `1px dashed ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: T.gray2 }}>
             <MessageCircle size={28} color={T.gray2} style={{ marginBottom: 10 }} />
-            <div>No conversations yet. Enquire about a property to start one.</div>
+            <div>No conversations yet. Message an agent about a property to start one.</div>
           </div>
         ) : (
           <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${T.border}`, overflow: "hidden" }}>
@@ -194,7 +194,7 @@ function BuyerMessagesPage() {
                       </div>
                     </div>
                     <div style={{ fontSize: 12, color: T.gray2, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {listing?.agents?.full_name ? `with ${listing.agents.full_name}` : listing?.city || ""}
+                      with {c.counterpartName}
                     </div>
                     <div
                       style={{
