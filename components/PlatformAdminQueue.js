@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPlatformActivity, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
 import { startOrGetReportThread, fetchReportUnreadFlags } from "@/lib/messaging-queries";
 import { createClient } from "@/lib/supabase-client";
-import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag, X } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag, X, UserPlus, UserX, ShieldCheck, Ban, PlusCircle } from "lucide-react";
 import UserManagementTab from "./UserManagementTab";
 import MessageThread from "./MessageThread";
 import AdminMessageCenter from "./AdminMessageCenter";
@@ -319,6 +319,58 @@ function ReportCard({ report, onDismiss, onMarkReviewed, onMessage, hasUnread, b
   );
 }
 
+// Maps a raw activity item (admin action, new signup, or new listing)
+// to display text + icon. Kept outside the component since it's pure.
+function describeActivity(item) {
+  if (item.type === "new_user") {
+    return { Icon: UserPlus, color: T.navy, bg: "#E8EEF7", text: `New user registered — ${item.name}` };
+  }
+  if (item.type === "new_listing") {
+    return {
+      Icon: PlusCircle,
+      color: T.gold,
+      bg: "#FBF0DC",
+      text: `New listing posted — ${item.title}${item.agentName ? ` by ${item.agentName}` : ""}`,
+    };
+  }
+  // admin_action
+  const who = item.actorName || "Admin";
+  const what = item.targetLabel || "";
+  switch (item.action) {
+    case "listing.approve":
+      return { Icon: CheckCircle2, color: T.green, bg: "#DCFCE7", text: `${who} approved listing "${what}"` };
+    case "listing.reject":
+      return { Icon: XCircle, color: T.red, bg: "#FEE2E2", text: `${who} rejected listing "${what}"` };
+    case "application.approve":
+      return { Icon: ShieldCheck, color: T.green, bg: "#DCFCE7", text: `${who} approved ${what}` };
+    case "application.reject":
+      return { Icon: XCircle, color: T.red, bg: "#FEE2E2", text: `${who} rejected ${what}` };
+    case "application.revoke":
+      return { Icon: Ban, color: T.red, bg: "#FEE2E2", text: `${who} revoked access for ${what}` };
+    case "user.suspend":
+      return { Icon: UserX, color: T.red, bg: "#FEE2E2", text: `${who} suspended ${what}` };
+    case "user.activate":
+      return { Icon: UserPlus, color: T.green, bg: "#DCFCE7", text: `${who} reactivated ${what}` };
+    case "report.update_status":
+      return { Icon: Flag, color: T.gray2, bg: T.bg, text: `${who} updated a report on "${what}"` };
+    default:
+      return { Icon: ClipboardList, color: T.gray2, bg: T.bg, text: `${who} performed an action` };
+  }
+}
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const seconds = Math.floor((new Date() - new Date(iso)) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 export default function PlatformAdminQueue({ adminName }) {
   const [activeView, setActiveView] = useState("overview"); // overview | applications | contact
   const [activeRole, setActiveRole] = useState("agent");
@@ -342,6 +394,8 @@ export default function PlatformAdminQueue({ adminName }) {
   const [activeThread, setActiveThread] = useState(null);
   const [threadLoading, setThreadLoading] = useState(false);
   const [unreadFlags, setUnreadFlags] = useState({});
+  const [activity, setActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
@@ -370,6 +424,11 @@ export default function PlatformAdminQueue({ adminName }) {
     fetchPlatformStats().then((data) => {
       setStats(data);
       setStatsLoading(false);
+    });
+    setActivityLoading(true);
+    fetchPlatformActivity(10).then((data) => {
+      setActivity(data);
+      setActivityLoading(false);
     });
   }, []);
 
@@ -670,6 +729,45 @@ export default function PlatformAdminQueue({ adminName }) {
                   </div>
                 </div>
               )}
+
+              <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, marginTop: 16 }}>
+                <p style={{ fontWeight: 800, color: T.navy, fontSize: 14, margin: "0 0 12px" }}>Platform Activity</p>
+                {activityLoading ? (
+                  <div style={{ color: T.gray2, fontSize: 13, padding: 10 }}>Loading…</div>
+                ) : activity.length === 0 ? (
+                  <div style={{ color: T.gray2, fontSize: 13, padding: 10 }}>No recent activity.</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {activity.map((item, i) => {
+                      const meta = describeActivity(item);
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            display: "flex", alignItems: "flex-start", gap: 10,
+                            padding: "9px 0", borderTop: i === 0 ? "none" : `1px solid ${T.border}`,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                              background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                          >
+                            <meta.Icon size={14} color={meta.color} />
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: 13, color: T.gray1, fontWeight: 600, overflowWrap: "break-word" }}>
+                              {meta.text}
+                            </div>
+                            <div style={{ fontSize: 11.5, color: T.gray2, marginTop: 1 }}>{timeAgo(item.timestamp)}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </>
           )
         ) : activeView === "users" ? (
