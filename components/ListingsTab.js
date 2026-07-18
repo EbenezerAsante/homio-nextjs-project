@@ -58,7 +58,9 @@ export default function ListingsTab({ listings, userId, onChange }) {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {listings.map((l) => (
+          {listings.map((l) => {
+            const cover = l.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url;
+            return (
             <div
               key={l.id}
               style={{
@@ -69,8 +71,16 @@ export default function ListingsTab({ listings, userId, onChange }) {
                 boxSizing: "border-box",
                 width: "100%",
                 minWidth: 0,
+                display: "flex",
+                gap: 12,
               }}
             >
+              {cover ? (
+                <img src={cover} alt="" style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 64, height: 64, borderRadius: 8, background: T.bg, flexShrink: 0 }} />
+              )}
+              <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                 <div style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, minWidth: 0, overflowWrap: "break-word" }}>
                   {l.title}
@@ -116,8 +126,10 @@ export default function ListingsTab({ listings, userId, onChange }) {
                   </button>
                 </div>
               </div>
+              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

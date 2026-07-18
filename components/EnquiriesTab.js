@@ -24,7 +24,9 @@ export default function EnquiriesTab({ enquiries, userId, onChange }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {enquiries.map((e) => (
+      {enquiries.map((e) => {
+        const cover = e.listings?.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url;
+        return (
         <div key={e.id}>
           <div
             style={{
@@ -35,8 +37,16 @@ export default function EnquiriesTab({ enquiries, userId, onChange }) {
               boxSizing: "border-box",
               width: "100%",
               minWidth: 0,
+              display: "flex",
+              gap: 12,
             }}
           >
+            {cover ? (
+              <img src={cover} alt="" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 56, height: 56, borderRadius: 8, background: T.bg, flexShrink: 0 }} />
+            )}
+            <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
               <div style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, minWidth: 0, overflowWrap: "break-word" }}>
                 {e.name}
@@ -86,6 +96,7 @@ export default function EnquiriesTab({ enquiries, userId, onChange }) {
                 <span style={{ fontSize: 11.5, color: T.gray2 }}>No account</span>
               )}
             </div>
+            </div>
           </div>
 
           {openThreadId === e.id && (
@@ -98,7 +109,8 @@ export default function EnquiriesTab({ enquiries, userId, onChange }) {
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

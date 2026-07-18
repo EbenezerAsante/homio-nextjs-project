@@ -36,6 +36,7 @@ export default function AppointmentsTab({ appointments, onChange }) {
       {appointments.map((a) => {
         const meta = STATUS_META[a.status] || STATUS_META.pending;
         const busy = busyId === a.id;
+        const cover = a.listings?.listing_images?.slice().sort((x, y) => (x.sort_order ?? 0) - (y.sort_order ?? 0))?.[0]?.url;
         return (
           <div
             key={a.id}
@@ -47,8 +48,16 @@ export default function AppointmentsTab({ appointments, onChange }) {
               boxSizing: "border-box",
               width: "100%",
               minWidth: 0,
+              display: "flex",
+              gap: 12,
             }}
           >
+            {cover ? (
+              <img src={cover} alt="" style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 56, height: 56, borderRadius: 8, background: T.bg, flexShrink: 0 }} />
+            )}
+            <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
               <div style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, minWidth: 0, overflowWrap: "break-word" }}>
                 {a.listings?.title || "—"}
@@ -106,6 +115,7 @@ export default function AppointmentsTab({ appointments, onChange }) {
                 <Clock3 size={14} /> Mark done
               </button>
             ) : null}
+            </div>
           </div>
         );
       })}
