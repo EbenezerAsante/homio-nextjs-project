@@ -1,71 +1,47 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
+import { findOrCreateConversation, sendConversationMessage } from "../lib/conversation-queries";
 import { T } from "../lib/constants";
 
 export default function EnquiryForm({ listingId, agentId }) {
+  const router = useRouter();
   const supabase = createClient();
-  const [form, setForm] = useState({ name: "", phone: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
+  const [user, setUser] = useState(null);
+  const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [isOwnListing, setIsOwnListing] = useState(false);
-  const [checkingOwner, setCheckingOwner] = useState(true);
+  const [checkingUser, setCheckingUser] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      const user = data.user;
-      setIsOwnListing(!!user && user.id === agentId);
-
-      if (user && user.id !== agentId) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, email")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        setForm((f) => ({
-          ...f,
-          name: profile?.full_name || f.name,
-          email: profile?.email || user.email || f.email,
-        }));
-      }
-
-      setCheckingOwner(false);
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user || null);
+      setIsOwnListing(!!data.user && data.user.id === agentId);
+      setCheckingUser(false);
     });
   }, [agentId]);
 
   const submit = async () => {
-    if (!form.name || !form.phone) {
-      setError("Please fill in your name and phone number.");
+    if (!message.trim()) {
+      setError("Type a message to send.");
       return;
     }
     setSending(true);
     setError(null);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user?.id === agentId) {
+    try {
+      const conversation = await findOrCreateConversation(listingId, user.id);
+      await sendConversationMessage(conversation.id, user.id, "buyer", message.trim());
+      router.push(`/dashboard/messages?open=${conversation.id}`);
+    } catch (e) {
       setSending(false);
-      setError("You can't send an enquiry on your own listing.");
-      return;
+      setError(e.message || "Couldn't send your message. Try again.");
     }
-
-    const { error: err } = await supabase.from("enquiries").insert({
-      listing_id: listingId,
-      agent_id: agentId,
-      buyer_id: user?.id || null,
-      name: form.name,
-      phone: form.phone,
-      email: form.email || null,
-      message: form.message || null,
-    });
-    setSending(false);
-    if (err) setError(err.message);
-    else setSent(true);
   };
 
-  if (checkingOwner) return null;
+  if (checkingUser) return null;
 
   if (isOwnListing) {
     return (
@@ -75,30 +51,48 @@ export default function EnquiryForm({ listingId, agentId }) {
     );
   }
 
-  if (sent) {
+  if (!user) {
     return (
-      <div style={{ background: T.greenL, color: T.green, padding: 14, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: 700 }}>
-        ✔ Enquiry sent! The agent will contact you shortly.
-        <div style={{ fontWeight: 400, fontSize: 12, marginTop: 4 }}>
-          Signed in? Continue the conversation anytime from Dashboard → Messages.
+      <div style={{ background: T.bg, borderRadius: 8, padding: 16, textAlign: "center" }}>
+        <div style={{ fontSize: 13, color: T.gray1, marginBottom: 10 }}>
+          Sign in to message the agent about this property.
         </div>
+        <a
+          href="/login"
+          style={{
+            display: "inline-block",
+            background: T.navy,
+            color: "#fff",
+            borderRadius: 8,
+            padding: "9px 18px",
+            fontSize: 13,
+            fontWeight: 700,
+            textDecoration: "none",
+          }}
+        >
+          Sign in
+        </a>
       </div>
     );
   }
 
-  const inputStyle = { width: "100%", border: `1.5px solid ${T.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, marginBottom: 8, boxSizing: "border-box" };
-
   return (
     <div>
-      <input placeholder="Your Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={inputStyle} />
-      <input placeholder="Phone Number *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={inputStyle} />
-      <input placeholder="Email (optional)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={inputStyle} />
       <textarea
-        placeholder="Message (optional)"
-        value={form.message}
-        onChange={(e) => setForm({ ...form, message: e.target.value })}
+        placeholder="Ask a question about this property…"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
         rows={3}
-        style={{ ...inputStyle, resize: "vertical" }}
+        style={{
+          width: "100%",
+          border: `1.5px solid ${T.border}`,
+          borderRadius: 8,
+          padding: "8px 12px",
+          fontSize: 13,
+          marginBottom: 8,
+          boxSizing: "border-box",
+          resize: "vertical",
+        }}
       />
       {error && <div style={{ color: T.red, fontSize: 12, marginBottom: 8 }}>{error}</div>}
       <button
@@ -116,7 +110,7 @@ export default function EnquiryForm({ listingId, agentId }) {
           opacity: sending ? 0.6 : 1,
         }}
       >
-        {sending ? "Sending…" : "✉️ Send Enquiry"}
+        {sending ? "Sending…" : "✉️ Message Agent"}
       </button>
     </div>
   );

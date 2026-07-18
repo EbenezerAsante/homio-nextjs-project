@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
 import { requestAppointment } from "@/lib/appointments-queries";
+import { findOrCreateConversation, sendConversationMessage } from "@/lib/conversation-queries";
 import { T } from "@/lib/constants";
 import { Calendar } from "lucide-react";
 
@@ -13,7 +14,6 @@ export default function AppointmentBooking({ listingId, agentId }) {
   const [datetime, setDatetime] = useState("");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);
   const [isOwnListing, setIsOwnListing] = useState(false);
   const [checkingOwner, setCheckingOwner] = useState(true);
@@ -46,12 +46,20 @@ export default function AppointmentBooking({ listingId, agentId }) {
     }
 
     try {
-      await requestAppointment(listingId, user.id, agentId, new Date(datetime).toISOString(), note);
-      setSent(true);
+      const conversation = await findOrCreateConversation(listingId, user.id);
+      const when = new Date(datetime).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      await requestAppointment(listingId, user.id, agentId, new Date(datetime).toISOString(), note, conversation.id);
+      await sendConversationMessage(
+        conversation.id,
+        user.id,
+        "buyer",
+        `📅 Requested a viewing for ${when}${note ? ` — ${note}` : ""}`
+      );
+      router.push(`/dashboard/messages?open=${conversation.id}`);
     } catch (e) {
       setError(e.message || "Failed to request viewing");
+      setSending(false);
     }
-    setSending(false);
   };
 
   if (checkingOwner) return null;
@@ -60,14 +68,6 @@ export default function AppointmentBooking({ listingId, agentId }) {
     return (
       <div style={{ background: T.bg, color: T.gray2, padding: 14, borderRadius: 8, textAlign: "center", fontSize: 13 }}>
         This is your own listing — viewing requests aren't available here.
-      </div>
-    );
-  }
-
-  if (sent) {
-    return (
-      <div style={{ background: T.greenL, color: T.green, padding: 14, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: 700 }}>
-        ✔ Viewing requested! Track its status from Dashboard → Appointments.
       </div>
     );
   }

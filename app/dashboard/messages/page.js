@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
-import { fetchBuyerConversations } from "@/lib/messaging-queries";
-import MessageThread from "@/components/MessageThread";
+import { fetchBuyerConversationsV2 } from "@/lib/conversation-queries";
+import ConversationThread from "@/components/ConversationThread";
 import { T } from "@/lib/constants";
 import { MessageCircle, ChevronLeft } from "lucide-react";
 
@@ -21,8 +21,17 @@ function formatWhen(iso) {
   return d.toLocaleDateString([], { day: "numeric", month: "short" });
 }
 
-export default function BuyerMessagesPage() {
+export default function BuyerMessagesPageWrapper() {
+  return (
+    <Suspense fallback={<div style={{ padding: 60, textAlign: "center", color: T.gray2 }}>Loading messages…</div>}>
+      <BuyerMessagesPage />
+    </Suspense>
+  );
+}
+
+function BuyerMessagesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [user, setUser] = useState(null);
   const [conversations, setConversations] = useState([]);
@@ -30,8 +39,9 @@ export default function BuyerMessagesPage() {
   const [loading, setLoading] = useState(true);
 
   const load = async (uid) => {
-    const convos = await fetchBuyerConversations(uid);
+    const convos = await fetchBuyerConversationsV2(uid);
     setConversations(convos);
+    return convos;
   };
 
   useEffect(() => {
@@ -41,7 +51,15 @@ export default function BuyerMessagesPage() {
         return;
       }
       setUser(data.user);
-      await load(data.user.id);
+      const convos = await load(data.user.id);
+
+      // Coming from Enquire / Request Viewing — open that conversation directly.
+      const openId = searchParams.get("open");
+      if (openId) {
+        const match = convos.find((c) => c.id === openId);
+        if (match) setSelected(match);
+      }
+
       setLoading(false);
     });
   }, []);
@@ -105,7 +123,7 @@ export default function BuyerMessagesPage() {
           </div>
 
           <div style={{ padding: "16px 20px 0" }}>
-            <MessageThread enquiry={selected} currentUserId={user.id} currentUserRole="buyer" />
+            <ConversationThread conversation={selected} currentUserId={user.id} currentUserRole="buyer" />
           </div>
         </div>
       </div>

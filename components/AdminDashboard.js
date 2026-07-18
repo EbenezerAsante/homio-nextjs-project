@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchAgentListings, fetchAgentEnquiries, buildAnalytics } from "@/lib/admin-queries";
 import { fetchAgentAppointments } from "@/lib/appointments-queries";
+import { fetchAgentConversationsV2 } from "@/lib/conversation-queries";
 import { T } from "@/lib/constants";
 import OverviewTab from "./OverviewTab";
 import ListingsTab from "./ListingsTab";
@@ -16,7 +17,7 @@ import "../styles/admin.css";
 const NAV_ITEMS = [
   { id: "overview", label: "Overview" },
   { id: "listings", label: "Listings" },
-  { id: "enquiries", label: "Enquiries" },
+  { id: "enquiries", label: "Messages" },
   { id: "appointments", label: "Appointments" },
   { id: "analytics", label: "Analytics" },
   { id: "profile", label: "Profile" },
@@ -27,18 +28,25 @@ export default function AdminDashboard({ agent, userId }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [listings, setListings] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
     setLoading(true);
-    const [l, e, a] = await Promise.all([
+    // enquiries is still fetched for Analytics/Overview, which read
+    // fields (responded_at) that conversations don't have — those two
+    // tabs migrate to the unified system separately. conversations
+    // powers the Messages tab itself.
+    const [l, e, c, a] = await Promise.all([
       fetchAgentListings(userId),
       fetchAgentEnquiries(userId),
+      fetchAgentConversationsV2(userId),
       fetchAgentAppointments(userId),
     ]);
     setListings(l);
     setEnquiries(e);
+    setConversations(c);
     setAppointments(a);
     setLoading(false);
   }
@@ -90,7 +98,7 @@ export default function AdminDashboard({ agent, userId }) {
               />
             )}
             {activeTab === "listings" && <ListingsTab listings={listings} userId={userId} onChange={loadData} />}
-            {activeTab === "enquiries" && <EnquiriesTab enquiries={enquiries} userId={userId} onChange={loadData} />}
+            {activeTab === "enquiries" && <EnquiriesTab conversations={conversations} userId={userId} onChange={loadData} />}
             {activeTab === "appointments" && <AppointmentsTab appointments={appointments} onChange={loadData} />}
             {activeTab === "analytics" && <AnalyticsTab analytics={analytics} listings={listings} />}
             {activeTab === "profile" && <ProfileTab agent={agent} userId={userId} />}
