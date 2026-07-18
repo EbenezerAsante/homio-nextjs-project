@@ -35,6 +35,7 @@ function BuyerMessagesPage() {
   const supabase = createClient();
   const [user, setUser] = useState(null);
   const [conversations, setConversations] = useState([]);
+  const [filter, setFilter] = useState("all"); // all | listings | enquiries
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -137,19 +138,59 @@ function BuyerMessagesPage() {
         <p style={{ color: T.gold, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>
           Dashboard
         </p>
-        <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 26, margin: "0 0 24px" }}>Messages</h1>
+        <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 26, margin: "0 0 16px" }}>Messages</h1>
 
-        {conversations.length === 0 ? (
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+          {[
+            { id: "all", label: "All" },
+            { id: "listings", label: "My Listings" },
+            { id: "enquiries", label: "My Enquiries" },
+          ].map((tab) => {
+            const count =
+              tab.id === "all"
+                ? conversations.length
+                : conversations.filter((c) => c.myRole === (tab.id === "listings" ? "agent" : "buyer")).length;
+            const active = filter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setFilter(tab.id)}
+                style={{
+                  border: `1.5px solid ${active ? T.navy : T.border}`,
+                  background: active ? T.navy : "#fff",
+                  color: active ? "#fff" : T.gray1,
+                  borderRadius: 999,
+                  padding: "7px 14px",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {tab.label} {count > 0 && `(${count})`}
+              </button>
+            );
+          })}
+        </div>
+
+        {(() => {
+          const visible = conversations.filter((c) => {
+            if (filter === "listings") return c.myRole === "agent";
+            if (filter === "enquiries") return c.myRole === "buyer";
+            return true;
+          });
+          return visible.length === 0 ? (
           <div style={{ background: "#fff", border: `1px dashed ${T.border}`, borderRadius: 12, padding: 40, textAlign: "center", color: T.gray2 }}>
             <MessageCircle size={28} color={T.gray2} style={{ marginBottom: 10 }} />
             <div>No conversations yet. Message an agent about a property to start one.</div>
           </div>
         ) : (
           <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${T.border}`, overflow: "hidden" }}>
-            {conversations.map((c, i) => {
+            {visible.map((c, i) => {
               const listing = c.listings;
               const cover = listing?.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url;
               const unread = c.unreadCount > 0;
+              const isListing = c.myRole === "agent";
               return (
                 <button
                   key={c.id}
@@ -175,6 +216,23 @@ function BuyerMessagesPage() {
                   )}
 
                   <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                      <span
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 800,
+                          letterSpacing: 0.4,
+                          textTransform: "uppercase",
+                          color: isListing ? T.navy : T.gold,
+                          background: isListing ? "#E8EEF7" : "#FBF0DC",
+                          padding: "2px 7px",
+                          borderRadius: 4,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isListing ? "My Listing" : "My Enquiry"}
+                      </span>
+                    </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                       <div
                         style={{
@@ -235,7 +293,8 @@ function BuyerMessagesPage() {
               );
             })}
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
