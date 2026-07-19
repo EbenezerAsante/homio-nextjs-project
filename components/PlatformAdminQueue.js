@@ -11,6 +11,7 @@ import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, 
 import UserManagementTab from "./UserManagementTab";
 import MessageThread from "./MessageThread";
 import AdminMessageCenter from "./AdminMessageCenter";
+import "../styles/admin.css";
 
 const ROLE_META = {
   agent: { label: "Agents", icon: Briefcase },
@@ -573,127 +574,65 @@ export default function PlatformAdminQueue({ adminName }) {
     setBusyId(null);
   };
 
-  return (
-    <div style={{ background: T.bg, minHeight: "90vh", padding: "40px 24px" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <p style={{ color: T.gold, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>
-          Platform Admin
-        </p>
-        <h1 style={{ color: T.navy, fontWeight: 900, fontSize: 26, margin: "0 0 20px" }}>
-          Platform Administration
-        </h1>
+  const VIEW_LABELS = {
+    overview: "Overview",
+    users: "Users",
+    listings: "Listings",
+    applications: "Applications",
+    contact: "Contact Messages",
+    reports: "Reports",
+    messageCenter: "Message Center",
+  };
 
-        {/* Top-level view switcher */}
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            marginBottom: 24,
-            borderBottom: `1px solid ${T.border}`,
-            overflowX: "auto",
-            WebkitOverflowScrolling: "touch",
-          }}
-        >
-          <button
-            onClick={() => setActiveView("overview")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
-              color: activeView === "overview" ? T.navy : T.gray2,
-              borderBottom: activeView === "overview" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <LayoutDashboard size={15} /> Overview
-          </button>
-          <button
-            onClick={() => setActiveView("users")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
-              color: activeView === "users" ? T.navy : T.gray2,
-              borderBottom: activeView === "users" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <Users size={15} /> Users
-          </button>
-          <button
-            onClick={() => setActiveView("listings")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
-              color: activeView === "listings" ? T.navy : T.gray2,
-              borderBottom: activeView === "listings" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <Home size={15} /> Listings
-            {pendingListings.length > 0 && (
-              <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
-                {pendingListings.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveView("applications")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", marginRight: 20, fontSize: 14, fontWeight: 700,
-              color: activeView === "applications" ? T.navy : T.gray2,
-              borderBottom: activeView === "applications" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <ClipboardList size={15} /> Applications
-          </button>
-          <button
-            onClick={() => setActiveView("contact")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", fontSize: 14, fontWeight: 700,
-              color: activeView === "contact" ? T.navy : T.gray2,
-              borderBottom: activeView === "contact" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <Mail size={15} /> Contact Messages
-            {contactMessages.length > 0 && (
-              <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
-                {contactMessages.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveView("reports")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", marginLeft: 20, fontSize: 14, fontWeight: 700,
-              color: activeView === "reports" ? T.navy : T.gray2,
-              borderBottom: activeView === "reports" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <Flag size={15} /> Reports
-            {stats?.pendingReports > 0 && (
-              <span style={{ background: T.red, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>
-                {stats.pendingReports}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveView("messageCenter")}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
-              border: "none", background: "none", cursor: "pointer",
-              padding: "10px 4px", marginLeft: 20, fontSize: 14, fontWeight: 700,
-              color: activeView === "messageCenter" ? T.navy : T.gray2,
-              borderBottom: activeView === "messageCenter" ? `2px solid ${T.navy}` : "2px solid transparent",
-            }}
-          >
-            <MessageSquare size={15} /> Message Center
-          </button>
+  return (
+    <div className="admin-layout">
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-logo">
+          Homio<span>.</span>
         </div>
+
+        <div className="admin-nav-group-label">Management</div>
+        <div className={`admin-nav-item ${activeView === "overview" ? "active" : ""}`} onClick={() => setActiveView("overview")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><LayoutDashboard size={15} /> Overview</span>
+        </div>
+        <div className={`admin-nav-item ${activeView === "users" ? "active" : ""}`} onClick={() => setActiveView("users")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><Users size={15} /> Users</span>
+        </div>
+        <div className={`admin-nav-item ${activeView === "listings" ? "active" : ""}`} onClick={() => setActiveView("listings")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><Home size={15} /> Listings</span>
+          {pendingListings.length > 0 && (
+            <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>{pendingListings.length}</span>
+          )}
+        </div>
+        <div className={`admin-nav-item ${activeView === "applications" ? "active" : ""}`} onClick={() => setActiveView("applications")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><ClipboardList size={15} /> Applications</span>
+        </div>
+
+        <div className="admin-nav-group-label">Communication</div>
+        <div className={`admin-nav-item ${activeView === "messageCenter" ? "active" : ""}`} onClick={() => setActiveView("messageCenter")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><MessageSquare size={15} /> Message Center</span>
+        </div>
+        <div className={`admin-nav-item ${activeView === "contact" ? "active" : ""}`} onClick={() => setActiveView("contact")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><Mail size={15} /> Contact Messages</span>
+          {contactMessages.length > 0 && (
+            <span style={{ background: T.gold, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>{contactMessages.length}</span>
+          )}
+        </div>
+
+        <div className="admin-nav-group-label">Support &amp; Safety</div>
+        <div className={`admin-nav-item ${activeView === "reports" ? "active" : ""}`} onClick={() => setActiveView("reports")} style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}><Flag size={15} /> Reports</span>
+          {stats?.pendingReports > 0 && (
+            <span style={{ background: T.red, color: "#fff", borderRadius: 999, fontSize: 10, padding: "1px 6px" }}>{stats.pendingReports}</span>
+          )}
+        </div>
+      </aside>
+
+      <main className="admin-main">
+        <div className="admin-header">
+          <h1>{VIEW_LABELS[activeView]}</h1>
+        </div>
+      <div style={{ maxWidth: 1000 }}>
 
         {activeView === "overview" ? (
           statsLoading || !stats ? (
@@ -977,6 +916,7 @@ export default function PlatformAdminQueue({ adminName }) {
           <AdminMessageCenter adminId={adminId} />
         ) : null}
       </div>
+      </main>
 
       {threadLoading && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
