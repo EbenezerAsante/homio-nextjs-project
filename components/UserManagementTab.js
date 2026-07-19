@@ -16,6 +16,14 @@ const ROLE_COLORS = {
   Buyer: { bg: "#F1F5F9", color: "#475569" },
 };
 
+const AVATAR_COLORS = ["#1B3A6B", "#C8961E", "#16A34A", "#7C3AED", "#DC2626", "#0891B2", "#9333EA", "#EA580C"];
+function avatarColor(name) {
+  const str = name || "?";
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 function RoleBadge({ role }) {
   const colors = ROLE_COLORS[role.label] || ROLE_COLORS.Buyer;
   const isPending = role.status === "pending";
@@ -138,57 +146,79 @@ export default function UserManagementTab() {
           No users found.
         </div>
       ) : (
-        <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: T.bg }}>
-                <th style={thStyle}>Name</th>
-                <th style={thStyle}>Email</th>
-                <th style={thStyle}>Phone</th>
-                <th style={thStyle}>Roles</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Joined</th>
-                <th style={thStyle}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} style={{ borderTop: `1px solid ${T.border}` }}>
-                  <td style={tdStyle}>{u.full_name || "—"}</td>
-                  <td style={tdStyle}>{u.email || "—"}</td>
-                  <td style={tdStyle}>{u.phone || "—"}</td>
-                  <td style={{ ...tdStyle, maxWidth: 260 }}>
-                    {u.roles.map((r, i) => <RoleBadge key={i} role={r} />)}
-                  </td>
-                  <td style={tdStyle}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {users.map((u) => {
+            const displayName = u.full_name || u.email || "Unnamed user";
+            const isYou = u.id === currentUserId;
+            const suspended = u.account_status === "suspended";
+            return (
+              <div
+                key={u.id}
+                style={{
+                  background: "#fff",
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 10,
+                  padding: 14,
+                  boxSizing: "border-box",
+                  width: "100%",
+                  minWidth: 0,
+                  display: "flex",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                    background: avatarColor(displayName), color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 800, fontSize: 16,
+                  }}
+                >
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, overflowWrap: "break-word" }}>
+                        {u.full_name || "—"} {isYou && <span style={{ fontSize: 11.5, color: T.gray3, fontWeight: 500 }}>(you)</span>}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: T.gray2, marginTop: 1, overflowWrap: "break-word" }}>
+                        {u.email || "—"}{u.phone ? ` • ${u.phone}` : ""}
+                      </div>
+                    </div>
                     <span
                       style={{
-                        background: u.account_status === "suspended" ? "#FEE2E2" : "#DCFCE7",
-                        color: u.account_status === "suspended" ? "#991B1B" : "#166534",
+                        flexShrink: 0,
+                        background: suspended ? "#FEE2E2" : "#DCFCE7",
+                        color: suspended ? "#991B1B" : "#166534",
                         borderRadius: 999,
                         fontSize: 11,
                         fontWeight: 700,
                         padding: "3px 9px",
                       }}
                     >
-                      {u.account_status === "suspended" ? "Suspended" : "Active"}
+                      {suspended ? "Suspended" : "Active"}
                     </span>
-                  </td>
-                  <td style={tdStyle}>
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                  </td>
-                  <td style={tdStyle}>
-                    {u.id === currentUserId ? (
-                      <span style={{ fontSize: 11.5, color: T.gray3 }}>(you)</span>
-                    ) : (
+                  </div>
+
+                  <div style={{ marginTop: 8 }}>
+                    {u.roles.map((r, i) => <RoleBadge key={i} role={r} />)}
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11.5, color: T.gray3 }}>
+                      Joined {u.created_at ? new Date(u.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    </span>
+                    {!isYou && (
                       <button
                         onClick={() => handleToggleStatus(u)}
                         disabled={busyId === u.id}
                         style={{
                           display: "flex", alignItems: "center", gap: 5,
                           background: "none",
-                          border: `1.5px solid ${u.account_status === "suspended" ? T.green : T.red}`,
-                          color: u.account_status === "suspended" ? T.green : T.red,
+                          border: `1.5px solid ${suspended ? T.green : T.red}`,
+                          color: suspended ? T.green : T.red,
                           borderRadius: 6,
                           padding: "5px 10px",
                           fontSize: 11.5,
@@ -198,15 +228,15 @@ export default function UserManagementTab() {
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {u.account_status === "suspended" ? <CheckCircle size={12} /> : <Ban size={12} />}
-                        {u.account_status === "suspended" ? "Activate" : "Suspend"}
+                        {suspended ? <CheckCircle size={12} /> : <Ban size={12} />}
+                        {suspended ? "Activate" : "Suspend"}
                       </button>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -218,19 +248,3 @@ export default function UserManagementTab() {
     </div>
   );
 }
-
-const thStyle = {
-  textAlign: "left",
-  padding: "10px 14px",
-  fontSize: 11,
-  fontWeight: 700,
-  color: T.gray2,
-  textTransform: "uppercase",
-  letterSpacing: 0.5,
-};
-
-const tdStyle = {
-  padding: "12px 14px",
-  fontSize: 13,
-  color: T.gray1,
-};
