@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { T } from "@/lib/constants";
-import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPlatformActivity, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
+import { APPROVAL_ROLES, fetchApplications, fetchPendingCounts, fetchPlatformStats, fetchPlatformActivity, fetchUserRoleBreakdown, fetchListingStatusBreakdown, fetchPendingListings, approveListing, rejectListing, approveApplication, rejectApplication, revokeApplication, fetchContactMessages, fetchReports, updateReportStatus } from "@/lib/platform-admin-queries";
+import DonutChart from "./DonutChart";
 import { startOrGetReportThread, fetchReportUnreadFlags } from "@/lib/messaging-queries";
 import { createClient } from "@/lib/supabase-client";
 import { CheckCircle2, XCircle, Clock, Briefcase, Building2, HardHat, KeyRound, Mail, ClipboardList, LayoutDashboard, Users, Home, MessageSquare, ExternalLink, FileText, Loader2, Flag, X, UserPlus, UserX, ShieldCheck, Ban, PlusCircle } from "lucide-react";
@@ -396,6 +397,9 @@ export default function PlatformAdminQueue({ adminName }) {
   const [unreadFlags, setUnreadFlags] = useState({});
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [roleBreakdown, setRoleBreakdown] = useState([]);
+  const [statusBreakdown, setStatusBreakdown] = useState([]);
+  const [breakdownLoading, setBreakdownLoading] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
@@ -429,6 +433,12 @@ export default function PlatformAdminQueue({ adminName }) {
     fetchPlatformActivity(10).then((data) => {
       setActivity(data);
       setActivityLoading(false);
+    });
+    setBreakdownLoading(true);
+    Promise.all([fetchUserRoleBreakdown(), fetchListingStatusBreakdown()]).then(([roles, statuses]) => {
+      setRoleBreakdown(roles);
+      setStatusBreakdown(statuses);
+      setBreakdownLoading(false);
     });
   }, []);
 
@@ -702,6 +712,25 @@ export default function PlatformAdminQueue({ adminName }) {
                 <StatCard icon={MessageSquare} label="Total Enquiries" value={stats.totalEnquiries} accent={T.gold} />
                 <StatCard icon={Clock} label="Pending Approvals" value={stats.totalPending} accent={T.red} />
                 <StatCard icon={Flag} label="Pending Reports" value={stats.pendingReports} accent={T.red} />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 16, marginBottom: 16 }}>
+                <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+                  <p style={{ fontWeight: 800, color: T.navy, fontSize: 14, margin: "0 0 14px" }}>Users by Role</p>
+                  {breakdownLoading ? (
+                    <div style={{ color: T.gray2, fontSize: 13 }}>Loading…</div>
+                  ) : (
+                    <DonutChart data={roleBreakdown} />
+                  )}
+                </div>
+                <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+                  <p style={{ fontWeight: 800, color: T.navy, fontSize: 14, margin: "0 0 14px" }}>Properties by Status</p>
+                  {breakdownLoading ? (
+                    <div style={{ color: T.gray2, fontSize: 13 }}>Loading…</div>
+                  ) : (
+                    <DonutChart data={statusBreakdown} />
+                  )}
+                </div>
               </div>
 
               {stats.totalPending > 0 && (
