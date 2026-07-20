@@ -1,11 +1,9 @@
 import { T } from "@/lib/constants";
-import { createClient } from "@/lib/supabase-server";
 import { ShieldCheck, Home, MessageCircle, Calendar, Users, MapPin, Sparkles, Target, Eye, Zap, Heart, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import AnimatedCounter from "@/components/AnimatedCounter";
 
 export const metadata = { title: "About | Homio Ghana" };
-export const revalidate = 300;
 
 const FEATURES = [
   {
@@ -55,49 +53,7 @@ const BADGES = [
   { emoji: "🏠", text: "Sale & Rental, One Platform" },
 ];
 
-async function getPlatformCounts() {
-  const supabase = createClient();
-  const [{ count: listings }, { count: agents }, regionsRes] = await Promise.all([
-    supabase.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("agents").select("id", { count: "exact", head: true }),
-    supabase.from("listings").select("region").eq("status", "active"),
-  ]);
-  const regionCount = new Set((regionsRes.data || []).map((r) => r.region).filter(Boolean)).size;
-  return {
-    listings: listings || 0,
-    agents: agents || 0,
-    regions: regionCount || 0,
-  };
-}
-
-// Real photos from real listings already on the platform — Ghana-specific
-// and legally clear, rather than hotlinking third-party stock imagery.
-// Filters out listings that read as unfinished/under-construction based on
-// their title, since there's no dedicated "construction status" field to
-// check structurally — titles are the only signal available.
-const UNFINISHED_HINTS = ["uncomplete", "incomplete", "under construction", "unfinished", "ongoing", "shell", "roofing stage"];
-async function getShowcasePhotos() {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("listings")
-    .select("id, title, listing_images(url, sort_order)")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  const finished = (data || []).filter((l) => {
-    const title = (l.title || "").toLowerCase();
-    return !UNFINISHED_HINTS.some((hint) => title.includes(hint));
-  });
-  const pool = finished.length > 0 ? finished : data || [];
-
-  return pool
-    .map((l) => l.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url)
-    .filter(Boolean);
-}
-
 export default async function AboutPage() {
-  const counts = await getPlatformCounts();
   const heroPhoto = "/images/about-hero.jpg";
   const storyPhoto = "https://homio-app-tau.vercel.app/assets/hug-DgwZEk2j.jpg";
 
@@ -232,24 +188,6 @@ export default async function AboutPage() {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Real, live stats — not projections */}
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 0" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16 }}>
-          <div style={{ background: T.navy, borderRadius: 14, padding: 26 }}>
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Active Listings</p>
-            <p style={{ color: "#fff", fontSize: 34, fontWeight: 900, margin: 0 }}>{counts.listings}</p>
-          </div>
-          <div style={{ background: "#F4EFE6", borderRadius: 14, padding: 26 }}>
-            <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Verified Listers</p>
-            <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}>{counts.agents}</p>
-          </div>
-          <div style={{ background: "#FBF0DC", borderRadius: 14, padding: 26 }}>
-            <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Regions Covered</p>
-            <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}>{counts.regions}</p>
-          </div>
         </div>
       </div>
 
