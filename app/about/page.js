@@ -2,6 +2,7 @@ import { T } from "@/lib/constants";
 import { createClient } from "@/lib/supabase-server";
 import { ShieldCheck, Home, MessageCircle, Calendar, Users, MapPin, Sparkles, Target, Eye, Zap, Heart, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import AnimatedCounter from "@/components/AnimatedCounter";
 
 export const metadata = { title: "About | Homio Ghana" };
 export const revalidate = 300;
@@ -96,9 +97,9 @@ async function getShowcasePhotos() {
 }
 
 export default async function AboutPage() {
-  const [counts, photos] = await Promise.all([getPlatformCounts(), getShowcasePhotos()]);
-  const heroPhoto = photos[0] || null;
-  const storyPhoto = photos[1] || photos[0] || null;
+  const counts = await getPlatformCounts();
+  const heroPhoto = "/images/about-hero.jpg";
+  const storyPhoto = "https://homio-app-tau.vercel.app/assets/hug-DgwZEk2j.jpg";
 
   return (
     <div style={{ background: T.bg, minHeight: "80vh" }}>
@@ -150,7 +151,7 @@ export default async function AboutPage() {
       </div>
 
       {/* Vision / Mission */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "56px 24px 0" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "56px 24px 0" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 20 }}>
           <div style={{ background: "#F4EFE6", borderRadius: 16, padding: 32 }}>
             <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(27,58,107,0.08)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
@@ -178,7 +179,7 @@ export default async function AboutPage() {
       </div>
 
       {/* Our Story */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 24px 0" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 0" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 40, alignItems: "center" }}>
           <div
             style={{
@@ -213,7 +214,7 @@ export default async function AboutPage() {
       </div>
 
       {/* Our Values */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 24px 0", textAlign: "center" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 0", textAlign: "center" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", border: `1px solid ${T.border}`, color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 14px", borderRadius: 999, marginBottom: 16 }}>
           Our Values
         </span>
@@ -235,7 +236,7 @@ export default async function AboutPage() {
       </div>
 
       {/* Real, live stats — not projections */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 24px 0" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 0" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16 }}>
           <div style={{ background: T.navy, borderRadius: 14, padding: 26 }}>
             <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Active Listings</p>
@@ -252,8 +253,51 @@ export default async function AboutPage() {
         </div>
       </div>
 
+      {/* Where we're headed — explicitly a goal, not a current-state claim */}
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 0", textAlign: "center" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", border: `1px solid ${T.border}`, color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 14px", borderRadius: 999, marginBottom: 16 }}>
+          Our 3-Month Target
+        </span>
+        <h2 style={{ color: T.navy, fontSize: 28, fontWeight: 900, margin: "0 0 8px", fontFamily: "var(--font-heading), Georgia, serif" }}>
+          Where we're headed next
+        </h2>
+        <p style={{ color: T.gray2, fontSize: 14, margin: "0 0 32px", maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>
+          Goals we're working toward over the next three months — not where we are today.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16 }}>
+          <div style={{ background: "#1B2415", borderRadius: 14, padding: 26, textAlign: "left" }}>
+            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Cities Covered</p>
+            <p style={{ color: "#fff", fontSize: 34, fontWeight: 900, margin: 0 }}>
+              <AnimatedCounter target={2} suffix="+" />
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, margin: "6px 0 0" }}>Accra &amp; Kumasi</p>
+          </div>
+          <div style={{ background: T.navy, borderRadius: 14, padding: 26, textAlign: "left" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Verified Listers</p>
+            <p style={{ color: "#fff", fontSize: 34, fontWeight: 900, margin: 0 }}>
+              <AnimatedCounter target={50} suffix="+" />
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, margin: "6px 0 0" }}>Month-3 target</p>
+          </div>
+          <div style={{ background: "#F4EFE6", borderRadius: 14, padding: 26, textAlign: "left" }}>
+            <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Active Listings</p>
+            <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}>
+              <AnimatedCounter target={150} suffix="+" />
+            </p>
+            <p style={{ color: T.gray3, fontSize: 12, margin: "6px 0 0" }}>Month-3 target</p>
+          </div>
+          <div style={{ background: "#FBF0DC", borderRadius: 14, padding: 26, textAlign: "left" }}>
+            <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Hidden Viewing Fees</p>
+            <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}>
+              <AnimatedCounter target={0} />
+            </p>
+            <p style={{ color: T.gray3, fontSize: 12, margin: "6px 0 0" }}>Tolerated on Homio — always</p>
+          </div>
+        </div>
+      </div>
+
       {/* Existing feature grid */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 24px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 24 }}>
           {FEATURES.map((f) => {
             const Icon = f.icon;
@@ -283,7 +327,7 @@ export default async function AboutPage() {
       <style>{`@keyframes homio-marquee { from { transform: translateX(0); } to { transform: translateX(-33.333%); } }`}</style>
 
       {/* Closing CTA — reflects that Homio is live today, not a waitlist */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 24px 80px", textAlign: "center" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 80px", textAlign: "center" }}>
         <h2 style={{ color: T.navy, fontSize: 28, fontWeight: 900, margin: "0 0 12px", fontFamily: "var(--font-heading), Georgia, serif" }}>
           Ready to find your next home?
         </h2>
