@@ -3,6 +3,7 @@ import { createClient } from "../lib/supabase-server";
 import PropertyCard from "../components/PropertyCard";
 import SearchWidget from "../components/SearchWidget";
 import { T } from "../lib/constants";
+import AnimatedCounter from "../components/AnimatedCounter";
 import { fetchOwnerTypeMap, withOwnerTypes } from "../lib/badge-queries";
 
 export const revalidate = 60; // re-fetch listings + stats every 60s
@@ -36,26 +37,6 @@ export default async function HomePage() {
       .limit(3),
     fetchOwnerTypeMap(supabase),
   ]);
-
-  // Live stats — real counts, not placeholders
-  const { count: listingsCount } = await supabase
-    .from("listings")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "active");
-
-  const { count: agentsCount } = await supabase
-    .from("agents")
-    .select("*", { count: "exact", head: true });
-
-  const { count: enquiriesCount } = await supabase
-    .from("enquiries")
-    .select("*", { count: "exact", head: true });
-
-  const { data: regionRows } = await supabase
-    .from("listings")
-    .select("region")
-    .eq("status", "active");
-  const regionsCovered = new Set((regionRows || []).map((r) => r.region).filter(Boolean)).size;
 
   return (
     <div style={{ background: "#fff" }}>
@@ -179,21 +160,37 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div style={{ background: T.bg, padding: "0 24px 56px" }}>
-        <div
-          style={{
-            maxWidth: 1280,
-            margin: "0 auto",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-            gap: 16,
-          }}
-        >
-          <StatCard bg={T.navyD} textColor="#fff" label="Regions Covered" value={regionsCovered} />
-          <StatCard bg="#EAF7EF" textColor={T.navy} label="Active Listings" value={listingsCount || 0} />
-          <StatCard bg="#FBF3E3" textColor={T.navy} label="Registered Agents" value={agentsCount || 0} />
-          <StatCard bg="#EFF4FF" textColor={T.navy} label="Enquiries Sent" value={enquiriesCount || 0} />
+      {/* 3-Month Target — a goal, not a current-state claim; matches About page */}
+      <div style={{ background: T.bg, padding: "0 24px 56px", textAlign: "center" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", border: `1px solid ${T.border}`, color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", padding: "6px 14px", borderRadius: 999, marginBottom: 12 }}>
+            Our 3-Month Target
+          </span>
+          <p style={{ color: T.gray2, fontSize: 13.5, margin: "0 0 24px" }}>
+            Goals we're working toward over the next three months — not where we are today.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16 }}>
+            <div style={{ background: T.navyD, borderRadius: 14, padding: 26, textAlign: "left" }}>
+              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Cities Covered</p>
+              <p style={{ color: "#fff", fontSize: 34, fontWeight: 900, margin: 0 }}><AnimatedCounter target={2} suffix="+" /></p>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, margin: "6px 0 0" }}>Accra &amp; Kumasi</p>
+            </div>
+            <div style={{ background: "#EAF7EF", borderRadius: 14, padding: 26, textAlign: "left" }}>
+              <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Active Listings</p>
+              <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}><AnimatedCounter target={150} suffix="+" /></p>
+              <p style={{ color: T.gray3, fontSize: 12, margin: "6px 0 0" }}>Month-3 target</p>
+            </div>
+            <div style={{ background: "#FBF3E3", borderRadius: 14, padding: 26, textAlign: "left" }}>
+              <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Verified Listers</p>
+              <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}><AnimatedCounter target={50} suffix="+" /></p>
+              <p style={{ color: T.gray3, fontSize: 12, margin: "6px 0 0" }}>Month-3 target</p>
+            </div>
+            <div style={{ background: "#EFF4FF", borderRadius: 14, padding: 26, textAlign: "left" }}>
+              <p style={{ color: T.gray2, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", margin: "0 0 8px" }}>Hidden Viewing Fees</p>
+              <p style={{ color: T.navy, fontSize: 34, fontWeight: 900, margin: 0 }}><AnimatedCounter target={0} /></p>
+              <p style={{ color: T.gray3, fontSize: 12, margin: "6px 0 0" }}>Tolerated on Homio — always</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -341,15 +338,6 @@ function FeatureCard({ bg, icon, title, text }) {
       <div style={{ color: T.navy, marginBottom: 14 }}>{icon}</div>
       <h3 style={{ color: T.navy, fontWeight: 800, fontSize: 16, margin: "0 0 8px" }}>{title}</h3>
       <p style={{ color: T.gray1, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{text}</p>
-    </div>
-  );
-}
-
-function StatCard({ bg, textColor, label, value }) {
-  return (
-    <div style={{ background: bg, borderRadius: 14, padding: "28px 22px" }}>
-      <p style={{ color: textColor, fontWeight: 900, fontSize: 34, margin: "0 0 4px" }}>{value}+</p>
-      <p style={{ color: textColor, opacity: 0.75, fontSize: 13, fontWeight: 600, margin: 0 }}>{label}</p>
     </div>
   );
 }
