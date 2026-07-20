@@ -71,18 +71,28 @@ async function getPlatformCounts() {
 
 // Real photos from real listings already on the platform — Ghana-specific
 // and legally clear, rather than hotlinking third-party stock imagery.
+// Filters out listings that read as unfinished/under-construction based on
+// their title, since there's no dedicated "construction status" field to
+// check structurally — titles are the only signal available.
+const UNFINISHED_HINTS = ["uncomplete", "incomplete", "under construction", "unfinished", "ongoing", "shell", "roofing stage"];
 async function getShowcasePhotos() {
   const supabase = createClient();
   const { data } = await supabase
     .from("listings")
-    .select("id, listing_images(url, sort_order)")
+    .select("id, title, listing_images(url, sort_order)")
     .eq("status", "active")
     .order("created_at", { ascending: false })
-    .limit(8);
-  const photos = (data || [])
+    .limit(20);
+
+  const finished = (data || []).filter((l) => {
+    const title = (l.title || "").toLowerCase();
+    return !UNFINISHED_HINTS.some((hint) => title.includes(hint));
+  });
+  const pool = finished.length > 0 ? finished : data || [];
+
+  return pool
     .map((l) => l.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url)
     .filter(Boolean);
-  return photos;
 }
 
 export default async function AboutPage() {
