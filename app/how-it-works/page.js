@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase-client";
 import { T } from "@/lib/constants";
 import {
   Search, MessageCircle, Calendar, Key, UserPlus, ClipboardCheck, ShieldCheck, Home,
@@ -9,17 +10,17 @@ import {
 } from "lucide-react";
 
 const BUYER_STEPS = [
-  { title: "Search", text: "Browse verified listings by region, city, property type, or budget — for sale or for rent." },
-  { title: "Message", text: "Enquire about a property and message the agent or owner directly, without leaving Homio." },
-  { title: "Book a Viewing", text: "Request a viewing time. The agent confirms or declines — no back-and-forth phone tag." },
-  { title: "Move In or Close", text: "Once you're happy, finalize the deal directly with the agent, agency, or owner." },
+  { icon: Search, title: "Search", text: "Browse verified listings by region, city, property type, or budget — for sale or for rent." },
+  { icon: MessageCircle, title: "Message", text: "Enquire about a property and message the agent or owner directly, without leaving Homio." },
+  { icon: Calendar, title: "Book a Viewing", text: "Request a viewing time. The agent confirms or declines — no back-and-forth phone tag." },
+  { icon: Key, title: "Move In or Close", text: "Once you're happy, finalize the deal directly with the agent, agency, or owner." },
 ];
 
 const SELLER_STEPS = [
-  { title: "Create an Account", text: "Sign up with your name, email, and phone — takes under a minute." },
-  { title: "Choose Your Role", text: "List your own property instantly as an owner, or apply as an agent, agency, developer, or property manager." },
-  { title: "Get Verified", text: "Professional roles go through a real review by our team before going live — this is what keeps listings trustworthy." },
-  { title: "List & Manage", text: "Add photos and details, then manage enquiries, messages, and viewing requests from one dashboard." },
+  { icon: UserPlus, title: "Create an Account", text: "Sign up with your name, email, and phone — takes under a minute." },
+  { icon: ClipboardCheck, title: "Choose Your Role", text: "List your own property instantly as an owner, or apply as an agent, agency, developer, or property manager." },
+  { icon: ShieldCheck, title: "Get Verified", text: "Professional roles go through a real review by our team before going live — this is what keeps listings trustworthy." },
+  { icon: Home, title: "List & Manage", text: "Add photos and details, then manage enquiries, messages, and viewing requests from one dashboard." },
 ];
 
 const FEATURES = [
@@ -41,15 +42,21 @@ const FAQS = [
 function StepRow({ steps }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20 }}>
-      {steps.map((s, i) => (
-        <div key={s.title} style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 22, boxShadow: T.shadow, position: "relative" }}>
-          <div style={{ position: "absolute", top: 16, right: 18, fontSize: 26, fontWeight: 900, color: T.bg }}>
-            {String(i + 1).padStart(2, "0")}
+      {steps.map((s, i) => {
+        const Icon = s.icon;
+        return (
+          <div key={s.title} style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 12, padding: 22, boxShadow: T.shadow, position: "relative" }}>
+            <div style={{ position: "absolute", top: 16, right: 18, fontSize: 26, fontWeight: 900, color: T.bg }}>
+              {String(i + 1).padStart(2, "0")}
+            </div>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: "#EFF4FF", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+              <Icon size={18} color={T.navy} strokeWidth={2.2} />
+            </div>
+            <h3 style={{ color: T.navy, fontSize: 15.5, fontWeight: 800, margin: "0 0 6px" }}>{s.title}</h3>
+            <p style={{ color: T.gray2, fontSize: 13.5, lineHeight: 1.6, margin: 0 }}>{s.text}</p>
           </div>
-          <h3 style={{ color: T.navy, fontSize: 15.5, fontWeight: 800, margin: "0 0 6px", maxWidth: "80%" }}>{s.title}</h3>
-          <p style={{ color: T.gray2, fontSize: 13.5, lineHeight: 1.6, margin: 0 }}>{s.text}</p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -72,11 +79,45 @@ function FaqItem({ q, a }) {
 
 export default function HowItWorksPage() {
   const [tab, setTab] = useState("buyer"); // buyer | seller
+  const [photos, setPhotos] = useState([]);
+
+  useEffect(() => {
+    const UNFINISHED_HINTS = ["uncomplete", "incomplete", "under construction", "unfinished", "ongoing", "shell"];
+    const supabase = createClient();
+    supabase
+      .from("listings")
+      .select("id, title, listing_images(url, sort_order)")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        const finished = (data || []).filter((l) => {
+          const title = (l.title || "").toLowerCase();
+          return !UNFINISHED_HINTS.some((hint) => title.includes(hint));
+        });
+        const pool = finished.length > 0 ? finished : data || [];
+        const urls = pool
+          .map((l) => l.listing_images?.slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))?.[0]?.url)
+          .filter(Boolean);
+        setPhotos(urls);
+      });
+  }, []);
+
+  const heroPhoto = photos[0];
+  const stripPhotos = photos.slice(1, 4);
 
   return (
     <div style={{ background: T.bg, minHeight: "80vh" }}>
       {/* Hero */}
-      <div style={{ background: T.navy, padding: "64px 24px 40px", textAlign: "center" }}>
+      <div
+        style={{
+          padding: "64px 24px 40px",
+          textAlign: "center",
+          background: heroPhoto
+            ? `linear-gradient(135deg, rgba(15,36,69,0.90) 0%, rgba(27,58,107,0.80) 55%, rgba(200,150,30,0.35) 100%), url(${heroPhoto}) center/cover no-repeat`
+            : T.navy,
+        }}
+      >
         <p style={{ color: T.gold, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 10px" }}>
           The Platform
         </p>
@@ -158,6 +199,23 @@ export default function HowItWorksPage() {
           </div>
         </div>
       </div>
+
+      {/* Real listings photo strip */}
+      {stripPhotos.length > 0 && (
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "56px 24px 0" }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${stripPhotos.length},1fr)`, gap: 14 }}>
+            {stripPhotos.map((url, i) => (
+              <div key={i} style={{ position: "relative", borderRadius: 14, overflow: "hidden", height: 180 }}>
+                <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 55%, rgba(15,36,69,0.6) 100%)" }} />
+              </div>
+            ))}
+          </div>
+          <p style={{ textAlign: "center", color: T.gray3, fontSize: 12, marginTop: 12 }}>
+            Real listings, currently live on Homio
+          </p>
+        </div>
+      )}
 
       {/* Platform Features */}
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "64px 24px 0", textAlign: "center" }}>
