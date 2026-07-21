@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 import { fetchTotalUnreadCount } from "../lib/conversation-queries";
 import { T } from "../lib/constants";
-import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail, Home, PlusCircle, User } from "lucide-react";
+import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail, Home, PlusCircle, User, UserSearch } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -265,6 +265,7 @@ export default function Navbar() {
                 }}
               >
                 <DropdownLink href="/listings" icon={Search} label="Browse Listings" onClick={() => setMoreOpen(false)} />
+                <DropdownLink href="/agents" icon={UserSearch} label="Find an Agent" onClick={() => setMoreOpen(false)} />
                 <DropdownLink href="/blog" icon={Newspaper} label="Blog" onClick={() => setMoreOpen(false)} />
                 <DropdownLink href="/team" icon={Users} label="Team" onClick={() => setMoreOpen(false)} />
                 <DropdownLink href="/contact" icon={Mail} label="Contact" onClick={() => setMoreOpen(false)} />
@@ -409,6 +410,9 @@ export default function Navbar() {
           </Link>
           <Link href="/listings" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             Browse Listings
+          </Link>
+          <Link href="/agents" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Find an Agent
           </Link>
           <Link href="/blog" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             Blog
