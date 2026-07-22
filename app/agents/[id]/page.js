@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase-server";
 import { fetchOwnerTypeMap, withOwnerTypes } from "@/lib/badge-queries";
 import { T } from "@/lib/constants";
 import PropertyCard from "@/components/PropertyCard";
-import { ShieldCheck, Phone, Mail, Home as HomeIcon } from "lucide-react";
+import ShareProfileButton from "@/components/ShareProfileButton";
+import ReportAgentButton from "@/components/ReportAgentButton";
+import { ShieldCheck, Phone, Mail, Home as HomeIcon, MessageCircle } from "lucide-react";
 
 const LISTING_COLUMNS =
   "id, title, price, listing_type, tag, furnished, area, city, region, bedrooms, bathrooms, sqft, agent_id, latitude, longitude, location_visibility, created_at, listing_images(url, sort_order)";
@@ -85,6 +87,19 @@ export default async function AgentProfilePage({ params }) {
                   <Phone size={15} /> {lister.phone}
                 </a>
               )}
+              {lister.phone && (
+                <a
+                  href={`https://wa.me/${(() => {
+                    const digits = lister.phone.replace(/\D/g, "");
+                    return digits.startsWith("0") ? `233${digits.slice(1)}` : digits;
+                  })()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", gap: 8, background: "#25D366", color: "#fff", borderRadius: 8, padding: "10px 16px", fontSize: 13.5, fontWeight: 700, textDecoration: "none" }}
+                >
+                  <MessageCircle size={15} /> WhatsApp
+                </a>
+              )}
               {lister.email && (
                 <a
                   href={`mailto:${lister.email}`}
@@ -93,6 +108,10 @@ export default async function AgentProfilePage({ params }) {
                   <Mail size={15} /> Email
                 </a>
               )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <ShareProfileButton name={lister.full_name} />
+                <ReportAgentButton agentId={lister.id} agentName={lister.full_name} />
+              </div>
             </div>
           </div>
         </div>

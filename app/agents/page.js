@@ -12,12 +12,17 @@ export default async function AgentsDirectoryPage() {
   const [{ data: listers }, ownerTypeMap, { data: activeListings }] = await Promise.all([
     supabase.from("agents").select("id, full_name, company, phone, email"),
     fetchOwnerTypeMap(supabase),
-    supabase.from("listings").select("agent_id").eq("status", "active"),
+    supabase.from("listings").select("agent_id, region").eq("status", "active"),
   ]);
 
   const countByAgent = {};
+  const regionsByAgent = {};
   (activeListings || []).forEach((l) => {
     countByAgent[l.agent_id] = (countByAgent[l.agent_id] || 0) + 1;
+    if (l.region) {
+      if (!regionsByAgent[l.agent_id]) regionsByAgent[l.agent_id] = new Set();
+      regionsByAgent[l.agent_id].add(l.region);
+    }
   });
 
   const enriched = (listers || [])
@@ -25,8 +30,11 @@ export default async function AgentsDirectoryPage() {
       ...l,
       ownerType: ownerTypeMap.get(l.id) || null,
       listingCount: countByAgent[l.id] || 0,
+      regions: regionsByAgent[l.id] ? [...regionsByAgent[l.id]] : [],
     }))
     .sort((a, b) => b.listingCount - a.listingCount);
+
+  const allRegions = [...new Set(enriched.flatMap((l) => l.regions))].sort();
 
   return (
     <div style={{ background: T.bg, minHeight: "80vh" }}>
@@ -44,7 +52,7 @@ export default async function AgentsDirectoryPage() {
       </div>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 64px" }}>
-        <AgentDirectoryClient listers={enriched} />
+        <AgentDirectoryClient listers={enriched} allRegions={allRegions} />
       </div>
     </div>
   );

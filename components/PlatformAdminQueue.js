@@ -265,6 +265,20 @@ function ReportCard({ report, onDismiss, onMarkReviewed, onMessage, hasUnread, b
             View Listing <ExternalLink size={12} />
           </Link>
         </div>
+      ) : report.reported_user_id ? (
+        <div style={{ fontSize: 13, color: T.gray1, marginBottom: 14, paddingTop: 10, borderTop: `1px solid ${T.border}` }}>
+          <div style={{ fontWeight: 700 }}>
+            Profile report — {report.reported_user?.full_name || "Unnamed user"}
+          </div>
+          <Link
+            href={`/agents/${report.reported_user_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: T.navy, marginTop: 6 }}
+          >
+            View Profile <ExternalLink size={12} />
+          </Link>
+        </div>
       ) : (
         <p style={{ fontSize: 12.5, color: T.gray3, marginBottom: 14, fontStyle: "italic" }}>
           The reported listing no longer exists.

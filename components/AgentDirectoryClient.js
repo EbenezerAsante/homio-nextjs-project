@@ -13,34 +13,54 @@ function avatarColor(name) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-export default function AgentDirectoryClient({ listers }) {
+export default function AgentDirectoryClient({ listers, allRegions = [] }) {
   const [query, setQuery] = useState("");
+  const [region, setRegion] = useState("");
 
   const q = query.trim().toLowerCase();
-  const filtered = !q
-    ? listers
-    : listers.filter((l) => {
-        const haystack = `${l.full_name || ""} ${l.company || ""}`.toLowerCase();
-        return haystack.includes(q);
-      });
+  const filtered = listers.filter((l) => {
+    const matchesQuery = !q || `${l.full_name || ""} ${l.company || ""}`.toLowerCase().includes(q);
+    const matchesRegion = !region || l.regions.includes(region);
+    return matchesQuery && matchesRegion;
+  });
 
   return (
     <div>
-      <div style={{ position: "relative", maxWidth: 460, margin: "0 auto 32px" }}>
-        <Search size={16} color={T.gray3} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }} />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or company…"
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            border: `1.5px solid ${T.border}`,
-            borderRadius: 999,
-            padding: "12px 16px 12px 40px",
-            fontSize: 14,
-          }}
-        />
+      <div style={{ display: "flex", gap: 10, maxWidth: 560, margin: "0 auto 32px", flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
+          <Search size={16} color={T.gray3} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }} />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name or company…"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              border: `1.5px solid ${T.border}`,
+              borderRadius: 999,
+              padding: "12px 16px 12px 40px",
+              fontSize: 14,
+            }}
+          />
+        </div>
+        {allRegions.length > 0 && (
+          <select
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            style={{
+              border: `1.5px solid ${T.border}`,
+              borderRadius: 999,
+              padding: "0 16px",
+              fontSize: 13.5,
+              color: region ? T.navy : T.gray2,
+              fontWeight: region ? 700 : 400,
+              background: "#fff",
+            }}
+          >
+            <option value="">All Regions</option>
+            {allRegions.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -96,6 +116,9 @@ export default function AgentDirectoryClient({ listers }) {
                   <HomeIcon size={13} /> {l.listingCount} listing{l.listingCount === 1 ? "" : "s"}
                 </span>
               </div>
+              {l.regions.length > 0 && (
+                <p style={{ fontSize: 11.5, color: T.gray3, margin: "8px 0 0" }}>{l.regions.join(", ")}</p>
+              )}
             </Link>
           ))}
         </div>
