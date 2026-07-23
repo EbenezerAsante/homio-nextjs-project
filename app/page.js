@@ -14,7 +14,7 @@ const HERO_IMAGE_URL =
 export default async function HomePage() {
   const supabase = createClient();
 
-  const [{ data: featured }, { data: forSale }, { data: toLet }, ownerTypeMap] = await Promise.all([
+  const [{ data: featured }, { data: forSale }, { data: toLet }, ownerTypeMap, { data: allListers }, { data: allActiveListings }] = await Promise.all([
     supabase
       .from("listings")
       .select("*, listing_images(url, sort_order)")
@@ -36,7 +36,19 @@ export default async function HomePage() {
       .order("created_at", { ascending: false })
       .limit(3),
     fetchOwnerTypeMap(supabase),
+    supabase.from("agents").select("id, full_name, company"),
+    supabase.from("listings").select("agent_id").eq("status", "active"),
   ]);
+
+  const listingCountByAgent = {};
+  (allActiveListings || []).forEach((l) => {
+    listingCountByAgent[l.agent_id] = (listingCountByAgent[l.agent_id] || 0) + 1;
+  });
+  const trustedAgents = (allListers || [])
+    .map((a) => ({ ...a, listingCount: listingCountByAgent[a.id] || 0, ownerType: ownerTypeMap.get(a.id) || null }))
+    .filter((a) => a.listingCount > 0)
+    .sort((a, b) => b.listingCount - a.listingCount)
+    .slice(0, 8);
 
   return (
     <div style={{ background: "#fff" }}>
@@ -198,6 +210,59 @@ export default async function HomePage() {
       <Section title="Featured Properties" sub="Handpicked by our team" href="/listings">
         <Grid items={withOwnerTypes(featured || [], ownerTypeMap)} />
       </Section>
+
+      {/* Meet Trusted Agents */}
+      {trustedAgents.length > 0 && (
+        <div style={{ padding: "0 24px 56px" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 20 }}>
+              <div>
+                <p style={{ color: T.gold, fontWeight: 700, fontSize: 11, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 6px" }}>
+                  Verified Professionals
+                </p>
+                <h2 style={{ color: T.navy, fontWeight: 900, fontSize: 24, margin: 0 }}>Meet Trusted Agents</h2>
+              </div>
+              <Link href="/agents" style={{ color: T.navy, fontWeight: 700, fontSize: 13.5, whiteSpace: "nowrap" }}>
+                View All Agents →
+              </Link>
+            </div>
+            <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8, WebkitOverflowScrolling: "touch" }}>
+              {trustedAgents.map((a) => (
+                <Link
+                  key={a.id}
+                  href={`/agents/${a.id}`}
+                  style={{
+                    flexShrink: 0, width: 200, background: "#fff", border: `1px solid ${T.border}`,
+                    borderRadius: 12, padding: 20, textDecoration: "none", boxShadow: T.shadow,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 46, height: 46, borderRadius: "50%", marginBottom: 12,
+                      background: T.navy, color: "#fff", display: "flex", alignItems: "center",
+                      justifyContent: "center", fontWeight: 800, fontSize: 17,
+                    }}
+                  >
+                    {(a.full_name || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ fontWeight: 800, fontSize: 14, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {a.full_name || "Unnamed"}
+                  </div>
+                  {a.company && (
+                    <div style={{ fontSize: 12, color: T.gray2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 8 }}>
+                      {a.company}
+                    </div>
+                  )}
+                  {a.ownerType?.verified && (
+                    <div style={{ fontSize: 11, fontWeight: 700, color: T.green, marginBottom: 4 }}>✓ {a.ownerType.label}</div>
+                  )}
+                  <div style={{ fontSize: 11.5, color: T.gray3 }}>{a.listingCount} listing{a.listingCount === 1 ? "" : "s"}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* For Sale */}
       <Section title="Recently Listed — For Sale" sub="Latest homes on the market" href="/listings?type=sale">

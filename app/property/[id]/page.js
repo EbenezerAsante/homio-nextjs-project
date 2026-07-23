@@ -9,6 +9,8 @@ import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
 import StickyContactBar from "../../../components/StickyContactBar";
 import ReportListingButton from "../../../components/ReportListingButton";
+import { fetchOwnerTypeMap } from "../../../lib/badge-queries";
+import Link from "next/link";
 
 export const revalidate = 30;
 
@@ -61,6 +63,9 @@ export default async function PropertyDetail({ params }) {
     .single();
 
   if (!p) return notFound();
+
+  const ownerTypeMap = await fetchOwnerTypeMap(supabase);
+  const listerType = p.agent_id ? ownerTypeMap.get(p.agent_id) : null;
 
   // Figure out who's looking at this listing, once, up front — reused for
   // the pending/rejected/suspended visibility gate AND the location privacy bypass.
@@ -219,10 +224,28 @@ export default async function PropertyDetail({ params }) {
 
           <div className="homio-detail-sidebar" style={{ width: 320, minWidth: 0, flexShrink: 0 }}>
             <div id="enquiry-section" style={{ background: "#fff", borderRadius: 10, padding: 24, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: T.gray3, margin: "0 0 8px" }}>
+                Listed By
+              </p>
               <div style={{ fontWeight: 800, color: T.navy, marginBottom: 4, fontSize: 15 }}>
                 {p.agents?.company || "Homio Agent"}
               </div>
-              <div style={{ fontSize: 12, color: T.gray3, marginBottom: 16 }}>{p.agents?.full_name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                <span style={{ fontSize: 12, color: T.gray3 }}>{p.agents?.full_name}</span>
+                {listerType?.verified && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 700, color: T.green }}>
+                    ✓ {listerType.label}
+                  </span>
+                )}
+              </div>
+              {p.agent_id && (
+                <Link
+                  href={`/agents/${p.agent_id}`}
+                  style={{ display: "block", textAlign: "center", border: `1.5px solid ${T.border}`, color: T.navy, borderRadius: 8, padding: "9px", fontWeight: 700, fontSize: 13, marginBottom: 10, textDecoration: "none" }}
+                >
+                  View Profile →
+                </Link>
+              )}
               <a
                 href={`tel:${p.agents?.phone}`}
                 style={{ display: "block", textAlign: "center", background: T.gold, color: "#fff", borderRadius: 8, padding: "10px", fontWeight: 700, marginBottom: 10 }}

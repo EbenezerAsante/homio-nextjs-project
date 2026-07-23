@@ -16,16 +16,42 @@ function avatarColor(name) {
 export default function AgentDirectoryClient({ listers, allRegions = [] }) {
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all"); // all | agent | agency
 
   const q = query.trim().toLowerCase();
   const filtered = listers.filter((l) => {
     const matchesQuery = !q || `${l.full_name || ""} ${l.company || ""}`.toLowerCase().includes(q);
     const matchesRegion = !region || l.regions.includes(region);
-    return matchesQuery && matchesRegion;
+    const matchesRole =
+      roleFilter === "all" ||
+      (roleFilter === "agent" && l.ownerType?.label === "Verified Agent") ||
+      (roleFilter === "agency" && l.ownerType?.label === "Verified Agency");
+    return matchesQuery && matchesRegion && matchesRole;
   });
 
   return (
     <div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 16 }}>
+        {[
+          { id: "all", label: "All" },
+          { id: "agent", label: "Agents" },
+          { id: "agency", label: "Agencies" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setRoleFilter(tab.id)}
+            style={{
+              border: `1.5px solid ${roleFilter === tab.id ? T.navy : T.border}`,
+              background: roleFilter === tab.id ? T.navy : "#fff",
+              color: roleFilter === tab.id ? "#fff" : T.gray1,
+              borderRadius: 999, padding: "7px 16px", fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: "flex", gap: 10, maxWidth: 560, margin: "0 auto 32px", flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
           <Search size={16} color={T.gray3} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }} />

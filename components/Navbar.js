@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 import { fetchTotalUnreadCount } from "../lib/conversation-queries";
 import { T } from "../lib/constants";
-import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail, Home, PlusCircle, User, UserSearch } from "lucide-react";
+import { ChevronDown, LayoutDashboard, ListChecks, ShieldCheck, Crown, LogOut, Search, Newspaper, Users, Mail, Home, PlusCircle, User, UserSearch, Info } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -231,8 +231,11 @@ export default function Navbar() {
           <Link href="/" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray1, fontWeight: 600 }}>
             Home
           </Link>
-          <Link href="/about" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
-            About
+          <Link href="/listings" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
+            Browse Listings
+          </Link>
+          <Link href="/agents" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
+            Find an Agent
           </Link>
           <Link href="/how-it-works" style={{ padding: "6px 14px", borderRadius: 6, fontSize: 14, color: T.gray2, fontWeight: 500 }}>
             How It Works
@@ -264,9 +267,8 @@ export default function Navbar() {
                   zIndex: 50,
                 }}
               >
-                <DropdownLink href="/listings" icon={Search} label="Browse Listings" onClick={() => setMoreOpen(false)} />
-                <DropdownLink href="/agents" icon={UserSearch} label="Find an Agent" onClick={() => setMoreOpen(false)} />
                 <DropdownLink href="/blog" icon={Newspaper} label="Blog" onClick={() => setMoreOpen(false)} />
+                <DropdownLink href="/about" icon={Info} label="About" onClick={() => setMoreOpen(false)} />
                 <DropdownLink href="/team" icon={Users} label="Team" onClick={() => setMoreOpen(false)} />
                 <DropdownLink href="/contact" icon={Mail} label="Contact" onClick={() => setMoreOpen(false)} />
               </div>
@@ -399,8 +401,11 @@ export default function Navbar() {
           <Link href="/" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             Home
           </Link>
-          <Link href="/about" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-            About
+          <Link href="/listings" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Browse Listings
+          </Link>
+          <Link href="/agents" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            Find an Agent
           </Link>
           <Link href="/how-it-works" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             How It Works
@@ -408,14 +413,11 @@ export default function Navbar() {
           <Link href="/for-contributors" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             For Contributors
           </Link>
-          <Link href="/listings" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-            Browse Listings
-          </Link>
-          <Link href="/agents" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
-            Find an Agent
-          </Link>
           <Link href="/blog" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             Blog
+          </Link>
+          <Link href="/about" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
+            About
           </Link>
           <Link href="/team" onClick={() => setMenuOpen(false)} style={{ padding: "10px 4px", fontSize: 15, color: T.gray1, fontWeight: 600 }}>
             Team
