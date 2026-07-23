@@ -9,6 +9,8 @@ import PropertyGallery from "../../../components/PropertyGallery";
 import MortgageCalculator from "../../../components/MortgageCalculator";
 import StickyContactBar from "../../../components/StickyContactBar";
 import ReportListingButton from "../../../components/ReportListingButton";
+import SaveListingButton from "../../../components/SaveListingButton";
+import ShareListingButton from "../../../components/ShareListingButton";
 import { fetchOwnerTypeMap } from "../../../lib/badge-queries";
 import Link from "next/link";
 
@@ -183,6 +185,10 @@ export default async function PropertyDetail({ params }) {
               <div style={{ fontSize: 32, fontWeight: 900, color: T.gold }}>
                 {fmt(p.price, p.listing_type)}
                 {p.listing_type === "rent" && <span style={{ fontSize: 16, color: T.gray2, fontWeight: 400 }}> per month</span>}
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                <SaveListingButton listingId={p.id} />
+                <ShareListingButton title={p.title} />
               </div>
             </div>
 
